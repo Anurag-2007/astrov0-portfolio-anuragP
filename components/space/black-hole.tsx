@@ -6,6 +6,15 @@ import { Html } from "@react-three/drei"
 import * as THREE from "three"
 import { useSounds } from "./sound-engine"
 
+const ARCHIVE_ENTRIES = [
+  { text: "First project that totally failed", lesson: "Learned to scope down" },
+  { text: "Shipped a bug to production at 2am", lesson: "Learned CI/CD the hard way" },
+  { text: "Rewrote everything from scratch", lesson: "Learned when NOT to rewrite" },
+  { text: "Over-engineered a simple form", lesson: "Learned YAGNI principle" },
+  { text: "Ignored user feedback for months", lesson: "Learned to listen first, code second" },
+  { text: "Biggest mistake I learned from", lesson: "Every failure is a lesson in disguise" },
+]
+
 const SPAGHETTI_WORDS = [
   "GRAVITY", "SPACETIME", "SINGULARITY", "PORTFOLIO",
   "DEVELOPER", "CREATIVE", "QUANTUM", "PHOTON",
@@ -33,10 +42,13 @@ export function BlackHole() {
   const [sucking, setSucking] = useState(false)
   const [score, setScore] = useState(0)
   const [showScore, setShowScore] = useState(false)
+  const [showArchive, setShowArchive] = useState(false)
+  const [archiveIndex, setArchiveIndex] = useState(0)
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([])
   const suckProgress = useRef(0)
   const nextWordId = useRef(0)
   const spawnTimer = useRef(0)
+  const clickCount = useRef(0)
   const sounds = useSounds()
 
   const diskPosition = useMemo(() => new THREE.Vector3(65, 5, -45), [])
@@ -76,7 +88,6 @@ export function BlackHole() {
     return pos
   }, [])
 
-  // Spawn floating words around the black hole
   const spawnWord = useCallback(() => {
     const word = SPAGHETTI_WORDS[Math.floor(Math.random() * SPAGHETTI_WORDS.length)]
     const angle = Math.random() * Math.PI * 2
@@ -139,7 +150,7 @@ export function BlackHole() {
       suckProgress.current = Math.min(1, suckProgress.current + 0.015)
     }
 
-    // Spawn words periodically when near
+    // Spawn words periodically
     spawnTimer.current += delta
     if (spawnTimer.current > 2.5 && floatingTexts.length < 6) {
       spawnTimer.current = 0
@@ -155,7 +166,6 @@ export function BlackHole() {
           const dist = pos.length()
 
           if (sucking && !ft.sucked) {
-            // Strong pull toward center
             const pullStrength = 2 / Math.max(dist, 1)
             pos.add(dir.multiplyScalar(pullStrength * 60 * delta))
             const newStretching = Math.min(1, ft.stretching + delta * 2)
@@ -171,7 +181,6 @@ export function BlackHole() {
 
           // Gentle orbital motion
           pos.add(ft.velocity.clone().multiplyScalar(delta))
-          // Weak gravity
           const gravity = 0.3 / Math.max(dist * dist, 4)
           const pullDir = pos.clone().negate().normalize()
           const newVel = ft.velocity.clone().add(pullDir.multiplyScalar(gravity))
@@ -185,17 +194,25 @@ export function BlackHole() {
   const handleClick = useCallback(
     (e: { stopPropagation: () => void }) => {
       e.stopPropagation()
+      clickCount.current++
+
+      // Every 3rd click opens the archive
+      if (clickCount.current % 3 === 0) {
+        setShowArchive(true)
+        setArchiveIndex((i) => (i + 1) % ARCHIVE_ENTRIES.length)
+        sounds.play("scan")
+        setTimeout(() => setShowArchive(false), 5000)
+        return
+      }
+
       setSucking(true)
       suckProgress.current = 0
       setShowScore(true)
       sounds.play("blackhole-hum")
-      // Spawn several words at once for the game
       for (let i = 0; i < 4; i++) {
         setTimeout(() => spawnWord(), i * 200)
       }
-      setTimeout(() => {
-        setSucking(false)
-      }, 4000)
+      setTimeout(() => setSucking(false), 4000)
     },
     [sounds, spawnWord]
   )
@@ -234,6 +251,12 @@ export function BlackHole() {
       <mesh>
         <torusGeometry args={[2.15, 0.05, 16, 128]} />
         <meshBasicMaterial color="#ffffff" transparent opacity={hovered ? 0.6 : 0.3} />
+      </mesh>
+
+      {/* Second lensing ring - offset */}
+      <mesh rotation={[0.3, 0.2, 0]}>
+        <torusGeometry args={[2.6, 0.03, 16, 128]} />
+        <meshBasicMaterial color="#ffaa44" transparent opacity={hovered ? 0.3 : 0.1} />
       </mesh>
 
       {/* Accretion disk */}
@@ -309,15 +332,42 @@ export function BlackHole() {
         </Html>
       ))}
 
+      {/* Archive overlay - appears near the event horizon */}
+      {showArchive && (
+        <Html center distanceFactor={20} position={[0, 8, 0]} style={{ pointerEvents: "none" }}>
+          <div className="glass-panel-bright rounded-lg px-4 py-3 w-64 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+              <span className="font-mono text-[10px] text-destructive uppercase tracking-[0.2em] font-bold">
+                EVENT HORIZON ARCHIVE
+              </span>
+            </div>
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-destructive/30 to-transparent mb-2" />
+            <p
+              className="font-mono text-xs text-foreground/70 leading-relaxed"
+              style={{
+                transform: "scaleY(1.05)",
+                textShadow: "0 2px 4px rgba(255,68,0,0.15)",
+              }}
+            >
+              {ARCHIVE_ENTRIES[archiveIndex].text}
+            </p>
+            <p className="font-mono text-[10px] text-chart-4/80 mt-1.5 italic">
+              {ARCHIVE_ENTRIES[archiveIndex].lesson}
+            </p>
+          </div>
+        </Html>
+      )}
+
       {/* Label / Score on hover */}
-      {hovered && (
+      {hovered && !showArchive && (
         <Html center distanceFactor={20} position={[0, 5, 0]} style={{ pointerEvents: "none" }}>
           <div className="glass-panel-bright rounded px-3 py-1.5 whitespace-nowrap">
             <span className="font-mono text-[10px] text-destructive uppercase tracking-[0.3em] font-semibold">
               SINGULARITY
             </span>
             <div className="font-mono text-[8px] text-muted-foreground mt-0.5">
-              Click to spaghettify words
+              Click to spaghettify -- 3rd click reveals archive
             </div>
             {showScore && (
               <div className="font-mono text-[10px] text-chart-4 mt-0.5">

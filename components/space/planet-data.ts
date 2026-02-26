@@ -14,6 +14,16 @@ export const PLANETS: PlanetData[] = [
     hasAtmosphere: true,
     atmosphereColor: "#00c8dc",
     moons: 1,
+    tilt: 0.2,
+    isSkillsPlanet: true,
+    skills: [
+      { name: "React / Next.js", years: 5, confidence: 95, production: true },
+      { name: "TypeScript", years: 4, confidence: 92, production: true },
+      { name: "Three.js / WebGL", years: 3, confidence: 85, production: true },
+      { name: "Node.js / Python", years: 5, confidence: 90, production: true },
+      { name: "Cloud (AWS/GCP)", years: 4, confidence: 80, production: true },
+      { name: "UI/UX Design", years: 3, confidence: 75, production: false },
+    ],
     content: {
       title: "SKILLS MATRIX",
       items: [
@@ -40,6 +50,7 @@ export const PLANETS: PlanetData[] = [
     hasAtmosphere: true,
     atmosphereColor: "#ff6600",
     moons: 2,
+    tilt: 0.15,
     content: {
       title: "MISSION LOG",
       items: [
@@ -64,6 +75,7 @@ export const PLANETS: PlanetData[] = [
     hasAtmosphere: true,
     atmosphereColor: "#8ecae6",
     moons: 0,
+    tilt: 0.35,
     content: {
       title: "FLIGHT LOG",
       items: [
@@ -87,6 +99,7 @@ export const PLANETS: PlanetData[] = [
     ringColor: "#ffdd44",
     hasAtmosphere: false,
     moons: 3,
+    tilt: 0.5,
     content: {
       title: "COMMENDATIONS",
       items: [
@@ -112,6 +125,7 @@ export const PLANETS: PlanetData[] = [
     hasAtmosphere: true,
     atmosphereColor: "#e040fb",
     moons: 1,
+    tilt: 0.25,
     isGallery: true,
     content: {
       title: "PHOTO GALLERY",
@@ -146,6 +160,7 @@ export const PLANETS: PlanetData[] = [
     hasAtmosphere: true,
     atmosphereColor: "#26c6da",
     moons: 2,
+    tilt: 0.1,
     content: {
       title: "TRAINING RECORDS",
       items: [
@@ -170,6 +185,7 @@ export const PLANETS: PlanetData[] = [
     hasAtmosphere: true,
     atmosphereColor: "#00ff88",
     moons: 0,
+    tilt: 0.3,
     content: {
       title: "COMM LINK",
       items: [

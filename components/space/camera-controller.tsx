@@ -13,7 +13,6 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
   const { camera, gl } = useThree()
   const targetPos = useRef(new THREE.Vector3(0, 40, 60))
   const targetLook = useRef(new THREE.Vector3(0, 0, 0))
-  const scrollRef = useRef(0)
   const angleRef = useRef(0)
 
   // Mouse drag state
@@ -33,8 +32,17 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
   // Orbit distance (zoomable)
   const orbitDist = useRef(50)
 
+  // Idle micro-drift state
+  const lastInteraction = useRef(Date.now())
+  const driftPhase = useRef(Math.random() * Math.PI * 2)
+
+  // Smooth transition progress (for cinematic planet focus)
+  const transitionProgress = useRef(0)
+  const wasSelected = useRef<{ x: number; z: number } | null>(null)
+
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
+    lastInteraction.current = Date.now()
     orbitDist.current = Math.max(15, Math.min(120, orbitDist.current + e.deltaY * 0.05))
     angleRef.current += e.deltaY * 0.001
   }, [])
@@ -43,12 +51,14 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
     if (e.pointerType === "touch") return
     isDragging.current = true
     lastMouse.current = { x: e.clientX, y: e.clientY }
+    lastInteraction.current = Date.now()
     gl.domElement.style.cursor = "grabbing"
   }, [gl])
 
   const handlePointerMove = useCallback((e: PointerEvent) => {
     if (e.pointerType === "touch") return
     if (!isDragging.current) return
+    lastInteraction.current = Date.now()
     const dx = e.clientX - lastMouse.current.x
     const dy = e.clientY - lastMouse.current.y
     dragAngleX.current += dx * 0.004
@@ -62,8 +72,8 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
     gl.domElement.style.cursor = "default"
   }, [gl])
 
-  // Touch handlers for mobile
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    lastInteraction.current = Date.now()
     if (e.touches.length === 1) {
       isTouching.current = true
       lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
@@ -76,6 +86,7 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
   }, [])
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
+    lastInteraction.current = Date.now()
     if (e.touches.length === 1 && isTouching.current) {
       const dx = e.touches[0].clientX - lastTouch.current.x
       const dy = e.touches[0].clientY - lastTouch.current.y
@@ -97,8 +108,8 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
     isTouching.current = false
   }, [])
 
-  // Keyboard handlers
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    lastInteraction.current = Date.now()
     keysDown.current.add(e.key.toLowerCase())
   }, [])
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
@@ -129,14 +140,17 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
     }
   }, [handleWheel, handlePointerDown, handlePointerMove, handlePointerUp, handleTouchStart, handleTouchMove, handleTouchEnd, handleKeyDown, handleKeyUp, gl])
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!launched) {
       camera.position.set(0, 100, 150)
       camera.lookAt(0, 0, 0)
       return
     }
 
-    // Keyboard controls (WASD + QE for up/down)
+    const t = state.clock.elapsedTime
+    driftPhase.current += delta * 0.3
+
+    // Keyboard controls
     const keys = keysDown.current
     const rotSpeed = 1.5 * delta
     if (keys.has("a") || keys.has("arrowleft")) dragAngleX.current += rotSpeed
@@ -146,6 +160,21 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
     if (keys.has("q")) orbitDist.current = Math.max(15, orbitDist.current - 20 * delta)
     if (keys.has("e")) orbitDist.current = Math.min(120, orbitDist.current + 20 * delta)
 
+    // Idle micro-drift: subtle camera movement when no interaction for 3s
+    const idleTime = (Date.now() - lastInteraction.current) / 1000
+    const driftAmount = Math.min(idleTime / 10, 0.4) // ramps up gently over 10s
+    const driftX = Math.sin(driftPhase.current * 0.7) * driftAmount * 0.3
+    const driftY = Math.cos(driftPhase.current * 0.5) * driftAmount * 0.15
+
+    // Track planet selection transitions
+    if (selectedPlanet !== wasSelected.current) {
+      transitionProgress.current = 0
+      wasSelected.current = selectedPlanet
+    }
+    transitionProgress.current = Math.min(1, transitionProgress.current + delta * 1.5)
+    // Smooth easing curve (ease-out cubic)
+    const ease = 1 - Math.pow(1 - transitionProgress.current, 3)
+
     if (selectedPlanet) {
       targetPos.current.set(
         selectedPlanet.x * 0.7,
@@ -154,8 +183,8 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
       )
       targetLook.current.set(selectedPlanet.x, 0, selectedPlanet.z)
     } else {
-      const totalAngle = angleRef.current + dragAngleX.current
-      const height = 20 + dragAngleY.current * 40
+      const totalAngle = angleRef.current + dragAngleX.current + driftX
+      const height = 20 + (dragAngleY.current + driftY) * 40
       targetPos.current.set(
         Math.sin(totalAngle) * orbitDist.current,
         Math.max(3, height),
@@ -164,11 +193,14 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
       targetLook.current.set(0, 0, 0)
     }
 
-    camera.position.lerp(targetPos.current, 0.03)
+    // Use eased lerp factor - faster when transitioning to planet, slower on idle
+    const lerpFactor = selectedPlanet ? 0.02 + ease * 0.03 : 0.03
+    camera.position.lerp(targetPos.current, lerpFactor)
+
     const currentLook = new THREE.Vector3()
     camera.getWorldDirection(currentLook)
     const targetDir = targetLook.current.clone().sub(camera.position).normalize()
-    currentLook.lerp(targetDir, 0.04)
+    currentLook.lerp(targetDir, lerpFactor * 1.2)
     camera.lookAt(
       camera.position.x + currentLook.x,
       camera.position.y + currentLook.y,
