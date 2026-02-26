@@ -19,6 +19,8 @@ export interface PlanetData {
   hasAtmosphere?: boolean
   atmosphereColor?: string
   moons?: number
+  isGallery?: boolean
+  gallery?: Array<{ title: string; desc: string }>
   content: {
     title: string
     items: string[]

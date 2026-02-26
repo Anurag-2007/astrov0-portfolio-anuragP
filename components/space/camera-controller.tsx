@@ -22,32 +22,88 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
   const dragAngleX = useRef(0)
   const dragAngleY = useRef(0)
 
+  // Touch state
+  const lastTouch = useRef({ x: 0, y: 0 })
+  const isTouching = useRef(false)
+  const lastPinchDist = useRef(0)
+
+  // Keyboard state
+  const keysDown = useRef<Set<string>>(new Set())
+
+  // Orbit distance (zoomable)
+  const orbitDist = useRef(50)
+
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
-    scrollRef.current += e.deltaY * 0.001
-    angleRef.current += e.deltaY * 0.002
+    orbitDist.current = Math.max(15, Math.min(120, orbitDist.current + e.deltaY * 0.05))
+    angleRef.current += e.deltaY * 0.001
   }, [])
 
-  // Mouse drag handlers
   const handlePointerDown = useCallback((e: PointerEvent) => {
+    if (e.pointerType === "touch") return
     isDragging.current = true
     lastMouse.current = { x: e.clientX, y: e.clientY }
     gl.domElement.style.cursor = "grabbing"
   }, [gl])
 
   const handlePointerMove = useCallback((e: PointerEvent) => {
+    if (e.pointerType === "touch") return
     if (!isDragging.current) return
     const dx = e.clientX - lastMouse.current.x
     const dy = e.clientY - lastMouse.current.y
-    dragAngleX.current += dx * 0.003
-    dragAngleY.current = Math.max(-0.5, Math.min(0.5, dragAngleY.current + dy * 0.002))
+    dragAngleX.current += dx * 0.004
+    dragAngleY.current = Math.max(-0.8, Math.min(0.8, dragAngleY.current + dy * 0.003))
     lastMouse.current = { x: e.clientX, y: e.clientY }
   }, [])
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: PointerEvent) => {
+    if (e.pointerType === "touch") return
     isDragging.current = false
     gl.domElement.style.cursor = "default"
   }, [gl])
+
+  // Touch handlers for mobile
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (e.touches.length === 1) {
+      isTouching.current = true
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    }
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      lastPinchDist.current = Math.sqrt(dx * dx + dy * dy)
+    }
+  }, [])
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (e.touches.length === 1 && isTouching.current) {
+      const dx = e.touches[0].clientX - lastTouch.current.x
+      const dy = e.touches[0].clientY - lastTouch.current.y
+      dragAngleX.current += dx * 0.004
+      dragAngleY.current = Math.max(-0.8, Math.min(0.8, dragAngleY.current + dy * 0.003))
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    }
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const delta = lastPinchDist.current - dist
+      orbitDist.current = Math.max(15, Math.min(120, orbitDist.current + delta * 0.1))
+      lastPinchDist.current = dist
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    isTouching.current = false
+  }, [])
+
+  // Keyboard handlers
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    keysDown.current.add(e.key.toLowerCase())
+  }, [])
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
+    keysDown.current.delete(e.key.toLowerCase())
+  }, [])
 
   useEffect(() => {
     const el = gl.domElement
@@ -55,20 +111,40 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
     el.addEventListener("pointerdown", handlePointerDown)
     window.addEventListener("pointermove", handlePointerMove)
     window.addEventListener("pointerup", handlePointerUp)
+    el.addEventListener("touchstart", handleTouchStart, { passive: true })
+    el.addEventListener("touchmove", handleTouchMove, { passive: true })
+    el.addEventListener("touchend", handleTouchEnd)
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
     return () => {
       window.removeEventListener("wheel", handleWheel)
       el.removeEventListener("pointerdown", handlePointerDown)
       window.removeEventListener("pointermove", handlePointerMove)
       window.removeEventListener("pointerup", handlePointerUp)
+      el.removeEventListener("touchstart", handleTouchStart)
+      el.removeEventListener("touchmove", handleTouchMove)
+      el.removeEventListener("touchend", handleTouchEnd)
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
     }
-  }, [handleWheel, handlePointerDown, handlePointerMove, handlePointerUp, gl])
+  }, [handleWheel, handlePointerDown, handlePointerMove, handlePointerUp, handleTouchStart, handleTouchMove, handleTouchEnd, handleKeyDown, handleKeyUp, gl])
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!launched) {
       camera.position.set(0, 100, 150)
       camera.lookAt(0, 0, 0)
       return
     }
+
+    // Keyboard controls (WASD + QE for up/down)
+    const keys = keysDown.current
+    const rotSpeed = 1.5 * delta
+    if (keys.has("a") || keys.has("arrowleft")) dragAngleX.current += rotSpeed
+    if (keys.has("d") || keys.has("arrowright")) dragAngleX.current -= rotSpeed
+    if (keys.has("w") || keys.has("arrowup")) dragAngleY.current = Math.max(-0.8, dragAngleY.current - rotSpeed * 0.5)
+    if (keys.has("s") || keys.has("arrowdown")) dragAngleY.current = Math.min(0.8, dragAngleY.current + rotSpeed * 0.5)
+    if (keys.has("q")) orbitDist.current = Math.max(15, orbitDist.current - 20 * delta)
+    if (keys.has("e")) orbitDist.current = Math.min(120, orbitDist.current + 20 * delta)
 
     if (selectedPlanet) {
       targetPos.current.set(
@@ -79,21 +155,20 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
       targetLook.current.set(selectedPlanet.x, 0, selectedPlanet.z)
     } else {
       const totalAngle = angleRef.current + dragAngleX.current
-      const orbitDist = 45 + Math.sin(scrollRef.current * 0.3) * 10
-      const height = 20 + Math.cos(scrollRef.current * 0.2) * 8 + dragAngleY.current * 20
+      const height = 20 + dragAngleY.current * 40
       targetPos.current.set(
-        Math.sin(totalAngle) * orbitDist,
-        Math.max(5, height),
-        Math.cos(totalAngle) * orbitDist
+        Math.sin(totalAngle) * orbitDist.current,
+        Math.max(3, height),
+        Math.cos(totalAngle) * orbitDist.current
       )
       targetLook.current.set(0, 0, 0)
     }
 
-    camera.position.lerp(targetPos.current, 0.02)
+    camera.position.lerp(targetPos.current, 0.03)
     const currentLook = new THREE.Vector3()
     camera.getWorldDirection(currentLook)
     const targetDir = targetLook.current.clone().sub(camera.position).normalize()
-    currentLook.lerp(targetDir, 0.03)
+    currentLook.lerp(targetDir, 0.04)
     camera.lookAt(
       camera.position.x + currentLook.x,
       camera.position.y + currentLook.y,

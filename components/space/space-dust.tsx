@@ -13,7 +13,7 @@ export function SpaceDust({ count = 600 }) {
     const s = new Float32Array(count)
 
     for (let i = 0; i < count; i++) {
-      const r = 20 + Math.random() * 80
+      const r = 20 + Math.random() * 120
       const theta = Math.random() * Math.PI * 2
       const phi = (Math.random() - 0.5) * Math.PI * 0.4
       pos[i * 3] = r * Math.cos(phi) * Math.cos(theta)

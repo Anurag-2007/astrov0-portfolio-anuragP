@@ -10,7 +10,7 @@ interface AsteroidBeltProps {
   count?: number
 }
 
-export function AsteroidBelt({ innerRadius = 48, outerRadius = 55, count = 200 }: AsteroidBeltProps) {
+export function AsteroidBelt({ innerRadius = 48, outerRadius = 55, count = 300 }: AsteroidBeltProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
 
@@ -20,7 +20,7 @@ export function AsteroidBelt({ innerRadius = 48, outerRadius = 55, count = 200 }
       radius: innerRadius + Math.random() * (outerRadius - innerRadius),
       y: (Math.random() - 0.5) * 3,
       speed: 0.005 + Math.random() * 0.01,
-      scale: 0.1 + Math.random() * 0.4,
+      scale: 0.05 + Math.random() * 0.2,
       rotSpeed: (Math.random() - 0.5) * 0.05,
       wobble: Math.random() * Math.PI * 2,
     }))
@@ -48,13 +48,13 @@ export function AsteroidBelt({ innerRadius = 48, outerRadius = 55, count = 200 }
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-      <dodecahedronGeometry args={[1, 0]} />
+      <sphereGeometry args={[1, 6, 6]} />
       <meshStandardMaterial
         color="#8a7a6a"
         roughness={0.9}
         metalness={0.1}
         emissive="#3a2a1a"
-        emissiveIntensity={0.1}
+        emissiveIntensity={0.15}
       />
     </instancedMesh>
   )

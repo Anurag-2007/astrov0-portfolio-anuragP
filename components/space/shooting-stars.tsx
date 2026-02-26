@@ -32,9 +32,9 @@ export function ShootingStars() {
     // Spawn new shooting stars
     if (t > nextSpawn.current && starsRef.current.length < 3) {
       const startPos = new THREE.Vector3(
-        (Math.random() - 0.5) * 200,
-        30 + Math.random() * 60,
-        (Math.random() - 0.5) * 200
+        (Math.random() - 0.5) * 300,
+        30 + Math.random() * 80,
+        (Math.random() - 0.5) * 300
       )
       const dir = new THREE.Vector3(
         (Math.random() - 0.5) * 2,
