@@ -15,7 +15,7 @@ export function Starfield({ count = 5000 }) {
     const base = new Float32Array(count)
 
     for (let i = 0; i < count; i++) {
-      const r = 150 + Math.random() * 800
+      const r = 200 + Math.random() * 1200
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
       pos[i * 3] = r * Math.sin(phi) * Math.cos(theta)

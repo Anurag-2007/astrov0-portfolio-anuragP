@@ -53,19 +53,19 @@ function SceneContent({ launched, selectedPlanet, onSelectPlanet }: SpaceScenePr
       {/* Ambient lighting */}
       <ambientLight intensity={0.12} color="#4a6a8a" />
 
-      {/* Enhanced starfield with twinkling */}
-      <Starfield count={5000} />
+      {/* Enhanced starfield */}
+      <Starfield count={7000} />
 
       {/* Space dust particles */}
-      <SpaceDust count={600} />
+      <SpaceDust count={800} />
 
-      {/* Nebula clouds with explosion */}
+      {/* Nebula clouds */}
       <Nebula />
 
-      {/* Sun with corona and flares */}
+      {/* Sun */}
       <Sun />
 
-      {/* Planets with rings, atmospheres, and moons */}
+      {/* All planets */}
       {PLANETS.map((planet) => (
         <Planet
           key={planet.id}
@@ -76,8 +76,11 @@ function SceneContent({ launched, selectedPlanet, onSelectPlanet }: SpaceScenePr
         />
       ))}
 
-      {/* Asteroid belt between last planet and black hole */}
-      <AsteroidBelt innerRadius={48} outerRadius={55} count={200} />
+      {/* Asteroid belt */}
+      <AsteroidBelt innerRadius={56} outerRadius={62} count={300} />
+
+      {/* Second distant asteroid belt */}
+      <AsteroidBelt innerRadius={80} outerRadius={90} count={200} />
 
       {/* Shooting stars */}
       <ShootingStars />
@@ -92,7 +95,7 @@ export function SpaceScene({ launched, selectedPlanet, onSelectPlanet }: SpaceSc
   return (
     <div className="fixed inset-0 w-full h-screen">
       <Canvas
-        camera={{ position: [0, 40, 60], fov: 60, near: 0.1, far: 2000 }}
+        camera={{ position: [0, 40, 60], fov: 60, near: 0.1, far: 3000 }}
         gl={{
           antialias: true,
           toneMapping: 3,
@@ -101,7 +104,7 @@ export function SpaceScene({ launched, selectedPlanet, onSelectPlanet }: SpaceSc
         onPointerMissed={() => onSelectPlanet(null)}
       >
         <color attach="background" args={["#020610"]} />
-        <fog attach="fog" args={["#020610", 120, 600]} />
+        <fog attach="fog" args={["#020610", 200, 1200]} />
         <SceneContent
           launched={launched}
           selectedPlanet={selectedPlanet}
