@@ -5,6 +5,13 @@ import { useFrame } from "@react-three/fiber"
 import { Html } from "@react-three/drei"
 import * as THREE from "three"
 
+export interface SkillInfo {
+  name: string
+  years: number
+  confidence: number
+  production: boolean
+}
+
 export interface PlanetData {
   id: string
   name: string
@@ -19,7 +26,10 @@ export interface PlanetData {
   hasAtmosphere?: boolean
   atmosphereColor?: string
   moons?: number
+  tilt?: number
   isGallery?: boolean
+  isSkillsPlanet?: boolean
+  skills?: SkillInfo[]
   gallery?: Array<{ title: string; desc: string }>
   content: {
     title: string
@@ -37,14 +47,17 @@ interface PlanetProps {
 export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
-  const ringRef = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
   const selectionRingRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
+  const [showSkillPanel, setShowSkillPanel] = useState(false)
+  const [hoveredSkillIdx, setHoveredSkillIdx] = useState(-1)
 
   const angle = time * data.orbitSpeed
   const x = Math.cos(angle) * data.orbitRadius
   const z = Math.sin(angle) * data.orbitRadius
+  const tilt = data.tilt ?? 0
 
   // Moon positions
   const moonData = useMemo(
@@ -80,13 +93,25 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
       selectionRingRef.current.rotation.x = -Math.PI / 2
       selectionRingRef.current.rotation.z = time * 0.5
     }
+    if (groupRef.current) {
+      groupRef.current.rotation.z = tilt
+    }
   })
 
   const glowColor = useMemo(() => new THREE.Color(data.emissive), [data.emissive])
 
+  // Toggle skill panel on select for skills planet
+  const handleClick = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation()
+    if (data.isSkillsPlanet) {
+      setShowSkillPanel((v) => !v)
+    }
+    onSelect(data.id)
+  }
+
   return (
-    <group>
-      {/* Orbit ring - dashed appearance */}
+    <group ref={groupRef}>
+      {/* Orbit ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[data.orbitRadius - 0.05, data.orbitRadius + 0.05, 256]} />
         <meshBasicMaterial
@@ -113,10 +138,7 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
       {/* Planet body */}
       <mesh
         ref={meshRef}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect(data.id)
-        }}
+        onClick={handleClick}
         onPointerOver={(e) => {
           e.stopPropagation()
           setHovered(true)
@@ -240,6 +262,57 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
           distance={data.size * 10}
           decay={2}
         />
+      )}
+
+      {/* Holographic skill panels - only for skills planet when selected */}
+      {data.isSkillsPlanet && isSelected && showSkillPanel && data.skills && (
+        <Html
+          position={[x + data.size * 3, 2, z]}
+          distanceFactor={15}
+        >
+          <div className="pointer-events-auto glass-panel-bright rounded-lg p-3 w-56">
+            <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-border/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="font-mono text-[9px] text-primary uppercase tracking-[0.2em] font-bold">
+                Skill Analysis
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {data.skills.map((skill, i) => (
+                <div
+                  key={skill.name}
+                  className={`p-1.5 rounded transition-all cursor-default ${
+                    hoveredSkillIdx === i
+                      ? "bg-primary/10 border border-primary/20"
+                      : "border border-transparent"
+                  }`}
+                  onMouseEnter={() => setHoveredSkillIdx(i)}
+                  onMouseLeave={() => setHoveredSkillIdx(-1)}
+                >
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="font-mono text-[9px] text-foreground/80 font-semibold">{skill.name}</span>
+                    <span className="font-mono text-[8px] text-primary">{skill.confidence}%</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${skill.confidence}%`,
+                        background: `linear-gradient(90deg, ${data.color}88, ${data.color})`,
+                      }}
+                    />
+                  </div>
+                  {hoveredSkillIdx === i && (
+                    <div className="flex items-center gap-3 mt-1 font-mono text-[7px] text-muted-foreground">
+                      <span>{skill.years}yr exp</span>
+                      <span>{skill.production ? "PROD READY" : "LEARNING"}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Html>
       )}
     </group>
   )

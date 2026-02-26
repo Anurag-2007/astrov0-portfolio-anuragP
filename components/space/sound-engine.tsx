@@ -37,6 +37,9 @@ type SoundName =
   | "deep-space"
   | "engine-rumble"
   | "scan"
+  | "radio-static"
+  | "satellite-beep"
+  | "supernova"
 
 const SoundContext = createContext<SoundEngine | null>(null)
 
@@ -406,6 +409,72 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
           g2.gain.exponentialRampToValueAtTime(0.001, now + 3)
           o2.start(now)
           o2.stop(now + 3)
+          break
+        }
+        case "radio-static": {
+          // Short burst of filtered noise that sounds like radio static
+          const noise = createNoise(ctx, 0.8)
+          const filter = ctx.createBiquadFilter()
+          filter.type = "bandpass"
+          filter.frequency.setValueAtTime(2000, now)
+          filter.frequency.exponentialRampToValueAtTime(800, now + 0.4)
+          filter.Q.value = 3
+          noise.connect(filter)
+          filter.connect(gain)
+          gain.gain.setValueAtTime(vol * 0.12, now)
+          gain.gain.setValueAtTime(vol * 0.08, now + 0.1)
+          gain.gain.setValueAtTime(vol * 0.15, now + 0.2)
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8)
+          noise.start(now)
+          noise.stop(now + 0.8)
+          break
+        }
+        case "satellite-beep": {
+          // Two quick high-pitched beeps like a satellite ping
+          for (let i = 0; i < 2; i++) {
+            const o = ctx.createOscillator()
+            o.type = "sine"
+            o.frequency.value = 1800
+            const g = ctx.createGain()
+            o.connect(g)
+            g.connect(master)
+            const t = now + i * 0.12
+            g.gain.setValueAtTime(vol * 0.15, t)
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.08)
+            o.start(t)
+            o.stop(t + 0.08)
+          }
+          break
+        }
+        case "supernova": {
+          // Massive low rumble with rising shimmer and shockwave
+          const noise = createNoise(ctx, 4)
+          const filter = ctx.createBiquadFilter()
+          filter.type = "lowpass"
+          filter.frequency.setValueAtTime(80, now)
+          filter.frequency.exponentialRampToValueAtTime(6000, now + 1.5)
+          filter.frequency.exponentialRampToValueAtTime(200, now + 4)
+          noise.connect(filter)
+          filter.connect(gain)
+          gain.gain.setValueAtTime(0.001, now)
+          gain.gain.linearRampToValueAtTime(vol * 0.6, now + 0.8)
+          gain.gain.linearRampToValueAtTime(vol * 0.8, now + 1.5)
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 4)
+          noise.start(now)
+          noise.stop(now + 4)
+          // Rising shimmer
+          const osc = ctx.createOscillator()
+          osc.type = "sine"
+          osc.frequency.setValueAtTime(200, now)
+          osc.frequency.exponentialRampToValueAtTime(3000, now + 2)
+          osc.frequency.exponentialRampToValueAtTime(100, now + 4)
+          const sg = ctx.createGain()
+          osc.connect(sg)
+          sg.connect(master)
+          sg.gain.setValueAtTime(vol * 0.15, now + 0.5)
+          sg.gain.exponentialRampToValueAtTime(0.001, now + 4)
+          osc.start(now + 0.5)
+          osc.stop(now + 4)
           break
         }
       }

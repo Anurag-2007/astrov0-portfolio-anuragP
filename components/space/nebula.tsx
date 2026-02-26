@@ -162,10 +162,24 @@ export function Nebula() {
         />
       </points>
 
-      {/* Nebula core glow lights */}
-      <pointLight position={[-70, 20, -60]} color="#00c8dc" intensity={5} distance={60} decay={2} />
-      <pointLight position={[40, -15, -80]} color="#ff6600" intensity={3} distance={40} decay={2} />
-      <pointLight position={[-20, 30, -100]} color="#cc44ff" intensity={2} distance={50} decay={2} />
+      {/* Nebula core glow lights - volumetric */}
+      <pointLight position={[-70, 20, -60]} color="#00c8dc" intensity={8} distance={80} decay={2} />
+      <pointLight position={[40, -15, -80]} color="#ff6600" intensity={5} distance={60} decay={2} />
+      <pointLight position={[-20, 30, -100]} color="#cc44ff" intensity={4} distance={70} decay={2} />
+
+      {/* Volumetric glow spheres for nebula cores */}
+      <mesh position={[-70, 20, -60]}>
+        <sphereGeometry args={[8, 16, 16]} />
+        <meshBasicMaterial color="#00c8dc" transparent opacity={0.02} side={THREE.BackSide} />
+      </mesh>
+      <mesh position={[40, -15, -80]}>
+        <sphereGeometry args={[6, 16, 16]} />
+        <meshBasicMaterial color="#ff6600" transparent opacity={0.015} side={THREE.BackSide} />
+      </mesh>
+      <mesh position={[-20, 30, -100]}>
+        <sphereGeometry args={[10, 16, 16]} />
+        <meshBasicMaterial color="#cc44ff" transparent opacity={0.012} side={THREE.BackSide} />
+      </mesh>
 
       {/* Explosion particles */}
       {explosion && (
