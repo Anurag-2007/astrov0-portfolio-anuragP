@@ -183,3 +183,74 @@
 .box-glow-strong {
   box-shadow: 0 0 30px rgba(0, 200, 220, 0.4), inset 0 0 20px rgba(0, 200, 220, 0.1);
 }
+
+/* Planet glow effects */
+.planet-glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 200, 220, 0.3), 0 0 60px rgba(0, 200, 220, 0.1);
+}
+
+.planet-glow-orange {
+  box-shadow: 0 0 20px rgba(255, 102, 0, 0.3), 0 0 60px rgba(255, 102, 0, 0.1);
+}
+
+/* Nebula pulse */
+@keyframes nebula-pulse {
+  0%, 100% { opacity: 0.05; transform: scale(1); }
+  50% { opacity: 0.12; transform: scale(1.05); }
+}
+
+.animate-nebula-pulse {
+  animation: nebula-pulse 8s ease-in-out infinite;
+}
+
+/* Star twinkle */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  25% { opacity: 0.8; }
+  50% { opacity: 0.5; }
+  75% { opacity: 1; }
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+/* Glow ring animation */
+@keyframes glow-ring {
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 200, 220, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(0, 200, 220, 0.4); }
+}
+
+.animate-glow-ring {
+  animation: glow-ring 2s ease-in-out infinite;
+}
+
+/* Engine fire effect */
+@keyframes engine-fire {
+  0% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: 0.7; transform: scaleY(1.3); }
+  100% { opacity: 1; transform: scaleY(1); }
+}
+
+.animate-engine-fire {
+  animation: engine-fire 0.1s ease-in-out infinite;
+}
+
+/* Holographic shimmer */
+@keyframes holo-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.holo-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 200, 220, 0.05) 25%,
+    rgba(0, 200, 220, 0.1) 50%,
+    rgba(0, 200, 220, 0.05) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: holo-shimmer 3s linear infinite;
+}

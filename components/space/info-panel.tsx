@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { PLANETS } from "./planet-data"
+import { useSounds } from "./sound-engine"
 
 interface InfoPanelProps {
   planetId: string
@@ -10,15 +11,18 @@ interface InfoPanelProps {
 
 export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
   const [visible, setVisible] = useState(false)
-  const planet = PLANETS.find(p => p.id === planetId)
+  const planet = PLANETS.find((p) => p.id === planetId)
+  const sounds = useSounds()
 
   useEffect(() => {
     setTimeout(() => setVisible(true), 50)
-  }, [])
+    sounds.play("scan")
+  }, [sounds])
 
   if (!planet) return null
 
   const handleClose = () => {
+    sounds.play("whoosh")
     setVisible(false)
     setTimeout(onClose, 300)
   }
@@ -30,6 +34,14 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
       }`}
     >
       <div className="glass-panel-bright rounded-lg overflow-hidden">
+        {/* Scan line across panel */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div
+            className="absolute left-0 w-full h-px bg-primary/10 animate-scan-line"
+            style={{ animationDuration: "3s" }}
+          />
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
           <div className="flex items-center gap-2">
@@ -57,6 +69,28 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
           </span>
         </div>
 
+        {/* Planet stats bar */}
+        <div className="px-4 py-2 border-b border-border/30 flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-accent" />
+            <span className="font-mono text-[9px] text-muted-foreground/50">
+              {planet.hasAtmosphere ? "ATM: YES" : "ATM: NO"}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-primary" />
+            <span className="font-mono text-[9px] text-muted-foreground/50">
+              MOONS: {planet.moons || 0}
+            </span>
+          </div>
+          {planet.hasRing && (
+            <div className="flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-chart-4" />
+              <span className="font-mono text-[9px] text-muted-foreground/50">RINGS: YES</span>
+            </div>
+          )}
+        </div>
+
         {/* Content items */}
         <div className="px-4 py-3 space-y-2">
           {planet.content.items.map((item, i) => (
@@ -73,6 +107,14 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
             SIZE: {planet.size} ER
           </span>
         </div>
+
+        {/* Glow edge effect */}
+        <div
+          className="absolute inset-0 pointer-events-none rounded-lg"
+          style={{
+            boxShadow: `inset 0 0 30px rgba(${planet.color === "#00c8dc" ? "0,200,220" : planet.color === "#ff6600" ? "255,102,0" : "142,202,230"}, 0.05)`,
+          }}
+        />
       </div>
     </div>
   )
@@ -92,13 +134,8 @@ function ContentItem({ text, index, color }: { text: string; index: number; colo
         visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
       }`}
     >
-      <span
-        className="w-1 h-1 rounded-full mt-1.5 shrink-0"
-        style={{ backgroundColor: color }}
-      />
-      <span className="font-mono text-xs text-foreground/80 leading-relaxed">
-        {text}
-      </span>
+      <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: color }} />
+      <span className="font-mono text-xs text-foreground/80 leading-relaxed">{text}</span>
     </div>
   )
 }

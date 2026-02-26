@@ -14,6 +14,11 @@ export interface PlanetData {
   size: number
   orbitRadius: number
   orbitSpeed: number
+  hasRing?: boolean
+  ringColor?: string
+  hasAtmosphere?: boolean
+  atmosphereColor?: string
+  moons?: number
   content: {
     title: string
     items: string[]
@@ -30,12 +35,27 @@ interface PlanetProps {
 export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
-  const [hovered, setHovered] = useState(false)
   const ringRef = useRef<THREE.Mesh>(null)
+  const atmosphereRef = useRef<THREE.Mesh>(null)
+  const selectionRingRef = useRef<THREE.Mesh>(null)
+  const [hovered, setHovered] = useState(false)
 
   const angle = time * data.orbitSpeed
   const x = Math.cos(angle) * data.orbitRadius
   const z = Math.sin(angle) * data.orbitRadius
+
+  // Moon positions
+  const moonData = useMemo(
+    () =>
+      Array.from({ length: data.moons || 0 }, (_, i) => ({
+        distance: data.size * 2 + 0.5 + i * 0.8,
+        speed: 0.8 + i * 0.3,
+        size: 0.1 + Math.random() * 0.15,
+        offset: (i * Math.PI * 2) / (data.moons || 1),
+        color: "#aaaacc",
+      })),
+    [data.moons, data.size]
+  )
 
   useFrame(() => {
     if (meshRef.current) {
@@ -44,13 +64,19 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
     }
     if (glowRef.current) {
       glowRef.current.position.set(x, 0, z)
-      const scale = hovered || isSelected ? 1.6 : 1.3
+      const pulse = Math.sin(time * 2) * 0.05
+      const scale = hovered || isSelected ? 1.6 + pulse : 1.3 + pulse
       glowRef.current.scale.setScalar(data.size * scale)
     }
-    if (ringRef.current) {
-      ringRef.current.position.set(x, 0, z)
-      ringRef.current.rotation.x = -Math.PI / 2
-      ringRef.current.rotation.z = time * 0.5
+    if (atmosphereRef.current) {
+      atmosphereRef.current.position.set(x, 0, z)
+      const breathe = 1 + Math.sin(time * 1.5) * 0.02
+      atmosphereRef.current.scale.setScalar(breathe)
+    }
+    if (selectionRingRef.current) {
+      selectionRingRef.current.position.set(x, 0, z)
+      selectionRingRef.current.rotation.x = -Math.PI / 2
+      selectionRingRef.current.rotation.z = time * 0.5
     }
   })
 
@@ -58,11 +84,29 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
 
   return (
     <group>
-      {/* Orbit ring */}
+      {/* Orbit ring - dashed appearance */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[data.orbitRadius - 0.05, data.orbitRadius + 0.05, 128]} />
-        <meshBasicMaterial color={data.color} transparent opacity={0.08} side={THREE.DoubleSide} />
+        <ringGeometry args={[data.orbitRadius - 0.05, data.orbitRadius + 0.05, 256]} />
+        <meshBasicMaterial
+          color={data.color}
+          transparent
+          opacity={isSelected ? 0.2 : 0.06}
+          side={THREE.DoubleSide}
+        />
       </mesh>
+
+      {/* Orbit glow when selected */}
+      {isSelected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[data.orbitRadius - 0.2, data.orbitRadius + 0.2, 256]} />
+          <meshBasicMaterial
+            color={data.color}
+            transparent
+            opacity={0.05}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
 
       {/* Planet body */}
       <mesh
@@ -85,10 +129,36 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
         <meshStandardMaterial
           color={data.color}
           emissive={data.emissive}
-          emissiveIntensity={hovered || isSelected ? 0.6 : 0.2}
-          roughness={0.4}
-          metalness={0.3}
+          emissiveIntensity={hovered || isSelected ? 0.8 : 0.3}
+          roughness={0.3}
+          metalness={0.2}
         />
+
+        {/* Planet ring (like Saturn) */}
+        {data.hasRing && (
+          <mesh rotation={[Math.PI / 2.2, 0.1, 0]}>
+            <ringGeometry args={[data.size * 1.4, data.size * 2.2, 64]} />
+            <meshBasicMaterial
+              color={data.ringColor || data.color}
+              transparent
+              opacity={0.35}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        )}
+
+        {/* Inner ring for ringed planets */}
+        {data.hasRing && (
+          <mesh rotation={[Math.PI / 2.2, 0.1, 0]}>
+            <ringGeometry args={[data.size * 1.2, data.size * 1.4, 64]} />
+            <meshBasicMaterial
+              color={data.ringColor || data.color}
+              transparent
+              opacity={0.15}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        )}
 
         {/* Planet label */}
         {(hovered || isSelected) && (
@@ -97,10 +167,28 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
               <span className="font-mono text-[10px] text-primary uppercase tracking-[0.3em] font-semibold">
                 {data.name}
               </span>
+              {hovered && !isSelected && (
+                <div className="font-mono text-[8px] text-muted-foreground mt-0.5">
+                  Click to explore
+                </div>
+              )}
             </div>
           </Html>
         )}
       </mesh>
+
+      {/* Atmosphere glow */}
+      {data.hasAtmosphere && (
+        <mesh ref={atmosphereRef}>
+          <sphereGeometry args={[data.size * 1.15, 32, 32]} />
+          <meshBasicMaterial
+            color={data.atmosphereColor || data.color}
+            transparent
+            opacity={hovered || isSelected ? 0.12 : 0.05}
+            side={THREE.BackSide}
+          />
+        </mesh>
+      )}
 
       {/* Glow effect */}
       <mesh ref={glowRef}>
@@ -113,9 +201,24 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
         />
       </mesh>
 
+      {/* Moons */}
+      {moonData.map((moon, i) => (
+        <Moon
+          key={`${data.id}-moon-${i}`}
+          parentX={x}
+          parentZ={z}
+          distance={moon.distance}
+          speed={moon.speed}
+          size={moon.size}
+          color={moon.color}
+          offset={moon.offset}
+          time={time}
+        />
+      ))}
+
       {/* Selection ring */}
       {isSelected && (
-        <mesh ref={ringRef}>
+        <mesh ref={selectionRingRef}>
           <ringGeometry args={[data.size * 1.5, data.size * 1.7, 64]} />
           <meshBasicMaterial
             color={data.color}
@@ -125,6 +228,64 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
           />
         </mesh>
       )}
+
+      {/* Point light from planet glow */}
+      {(hovered || isSelected) && (
+        <pointLight
+          position={[x, 0, z]}
+          color={data.color}
+          intensity={isSelected ? 5 : 2}
+          distance={data.size * 10}
+          decay={2}
+        />
+      )}
     </group>
+  )
+}
+
+function Moon({
+  parentX,
+  parentZ,
+  distance,
+  speed,
+  size,
+  color,
+  offset,
+  time,
+}: {
+  parentX: number
+  parentZ: number
+  distance: number
+  speed: number
+  size: number
+  color: string
+  offset: number
+  time: number
+}) {
+  const meshRef = useRef<THREE.Mesh>(null)
+
+  useFrame(() => {
+    if (meshRef.current) {
+      const a = time * speed + offset
+      meshRef.current.position.set(
+        parentX + Math.cos(a) * distance,
+        Math.sin(a * 0.5) * 0.3,
+        parentZ + Math.sin(a) * distance
+      )
+      meshRef.current.rotation.y += 0.01
+    }
+  })
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[size, 16, 16]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={0.2}
+        roughness={0.8}
+        metalness={0.1}
+      />
+    </mesh>
   )
 }

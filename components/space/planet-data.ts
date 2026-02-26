@@ -10,6 +10,10 @@ export const PLANETS: PlanetData[] = [
     size: 1.5,
     orbitRadius: 12,
     orbitSpeed: 0.15,
+    hasRing: false,
+    hasAtmosphere: true,
+    atmosphereColor: "#00c8dc",
+    moons: 1,
     content: {
       title: "SKILLS MATRIX",
       items: [
@@ -31,6 +35,11 @@ export const PLANETS: PlanetData[] = [
     size: 2,
     orbitRadius: 20,
     orbitSpeed: 0.1,
+    hasRing: true,
+    ringColor: "#ff8844",
+    hasAtmosphere: true,
+    atmosphereColor: "#ff6600",
+    moons: 2,
     content: {
       title: "MISSION LOG",
       items: [
@@ -51,6 +60,10 @@ export const PLANETS: PlanetData[] = [
     size: 1.2,
     orbitRadius: 28,
     orbitSpeed: 0.07,
+    hasRing: false,
+    hasAtmosphere: true,
+    atmosphereColor: "#8ecae6",
+    moons: 0,
     content: {
       title: "FLIGHT LOG",
       items: [
@@ -70,6 +83,10 @@ export const PLANETS: PlanetData[] = [
     size: 1,
     orbitRadius: 35,
     orbitSpeed: 0.05,
+    hasRing: true,
+    ringColor: "#ffdd44",
+    hasAtmosphere: false,
+    moons: 3,
     content: {
       title: "COMMENDATIONS",
       items: [
@@ -90,6 +107,10 @@ export const PLANETS: PlanetData[] = [
     size: 0.8,
     orbitRadius: 42,
     orbitSpeed: 0.03,
+    hasRing: false,
+    hasAtmosphere: true,
+    atmosphereColor: "#00ff88",
+    moons: 0,
     content: {
       title: "COMM LINK",
       items: [
