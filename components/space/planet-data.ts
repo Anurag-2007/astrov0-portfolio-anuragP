@@ -1,0 +1,103 @@
+import type { PlanetData } from "./planet"
+
+export const PLANETS: PlanetData[] = [
+  {
+    id: "skills",
+    name: "Skills",
+    description: "Technical expertise & capabilities",
+    color: "#00c8dc",
+    emissive: "#006878",
+    size: 1.5,
+    orbitRadius: 12,
+    orbitSpeed: 0.15,
+    content: {
+      title: "SKILLS MATRIX",
+      items: [
+        "React / Next.js / TypeScript",
+        "Three.js / WebGL / GLSL",
+        "Node.js / Python / Go",
+        "System Design & Architecture",
+        "Cloud Infrastructure (AWS/GCP)",
+        "UI/UX Design & Prototyping",
+      ],
+    },
+  },
+  {
+    id: "projects",
+    name: "Projects",
+    description: "Featured missions & deployments",
+    color: "#ff6600",
+    emissive: "#993300",
+    size: 2,
+    orbitRadius: 20,
+    orbitSpeed: 0.1,
+    content: {
+      title: "MISSION LOG",
+      items: [
+        "Nebula Dashboard - Real-time analytics platform",
+        "Quantum CMS - Headless content management",
+        "Stellar UI - Open-source component library",
+        "Dark Matter API - High-performance REST API",
+        "Pulsar Chat - Real-time messaging system",
+      ],
+    },
+  },
+  {
+    id: "experience",
+    name: "Experience",
+    description: "Career trajectory & history",
+    color: "#8ecae6",
+    emissive: "#4a6a7a",
+    size: 1.2,
+    orbitRadius: 28,
+    orbitSpeed: 0.07,
+    content: {
+      title: "FLIGHT LOG",
+      items: [
+        "Senior Engineer @ TechCorp (2023-Present)",
+        "Full Stack Developer @ StartupX (2021-2023)",
+        "Frontend Developer @ DesignCo (2019-2021)",
+        "BS Computer Science - MIT (2019)",
+      ],
+    },
+  },
+  {
+    id: "achievements",
+    name: "Achievements",
+    description: "Awards & milestones",
+    color: "#ffcc00",
+    emissive: "#997700",
+    size: 1,
+    orbitRadius: 35,
+    orbitSpeed: 0.05,
+    content: {
+      title: "COMMENDATIONS",
+      items: [
+        "Open Source Contributor of the Year 2024",
+        "50K+ GitHub Stars Across Projects",
+        "Speaker at ReactConf & NodeConf",
+        "Published Technical Author",
+        "Hackathon Champion x3",
+      ],
+    },
+  },
+  {
+    id: "contact",
+    name: "Contact",
+    description: "Communication uplink",
+    color: "#00ff88",
+    emissive: "#008844",
+    size: 0.8,
+    orbitRadius: 42,
+    orbitSpeed: 0.03,
+    content: {
+      title: "COMM LINK",
+      items: [
+        "Email: hello@spaceportfolio.dev",
+        "GitHub: @cosmicdev",
+        "LinkedIn: /in/cosmicdev",
+        "Twitter: @cosmicdev",
+      ],
+    },
+  },
+]
