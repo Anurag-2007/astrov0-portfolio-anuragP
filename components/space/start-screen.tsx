@@ -185,7 +185,7 @@ export function StartScreen({ onLaunch }: StartScreenProps) {
             <div className="h-px w-8 md:w-16 bg-gradient-to-l from-transparent to-primary/50" />
           </div>
           <h1 className="font-mono text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground text-glow-strong tracking-[0.15em] md:tracking-[0.2em] text-balance text-center">
-            MISSION CONTROL
+            ANURAG's SPACEPORT
           </h1>
           <p className="font-mono text-[9px] md:text-xs text-muted-foreground tracking-[0.2em] md:tracking-[0.3em] uppercase">
             Deep Space Portfolio Navigation System v2.4.1
@@ -358,21 +358,30 @@ export function StartScreen({ onLaunch }: StartScreenProps) {
   )
 }
 
+
 function ClockDisplay() {
   const [time, setTime] = useState("")
 
   useEffect(() => {
     const update = () => {
       const now = new Date()
-      setTime(now.toISOString().replace("T", " ").slice(0, 19) + " UTC")
+      setTime(
+        now.toLocaleString("en-IN", {
+          hour12: false,
+        })
+      )
     }
+
     update()
     const interval = setInterval(update, 1000)
+
     return () => clearInterval(interval)
   }, [])
 
   return <span>{time}</span>
 }
+
+export default ClockDisplay
 
 function TelemetryItem({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (

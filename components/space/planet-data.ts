@@ -27,9 +27,9 @@ export const PLANETS: PlanetData[] = [
     content: {
       title: "SKILLS MATRIX",
       items: [
-        "React / Next.js / TypeScript",
-        "Three.js / WebGL / GLSL",
-        "Node.js / Python / Go",
+        "React.js, Node.js",
+        "HTML5, CSS3, Vanilla JS",
+        "Python, C++",
         "System Design & Architecture",
         "Cloud Infrastructure (AWS/GCP)",
         "UI/UX Design & Prototyping",
