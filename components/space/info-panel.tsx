@@ -93,33 +93,36 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
         {/* Photography Gallery Carousel */}
         {isGallery && planet.gallery && (
           <div className="px-3 md:px-4 py-2 md:py-3 border-b border-border/30">
-            <div className="glass-panel rounded-lg p-3 md:p-4 relative overflow-hidden">
-              {/* Placeholder image area with generated gradient */}
-              <div
-                className="w-full h-28 md:h-36 rounded-md mb-2 md:mb-3 flex items-center justify-center relative overflow-hidden"
-                style={{
-                   backgroundImage: `url(${planet.gallery[galleryIndex].image})`,
-                   backgroundSize: "cover",
-                   backgroundPosition: "center",
-                   backgroundRepeat: "no-repeat",
-                }}
-              >
-                <div className="absolute inset-0 holo-shimmer" />
-                <div className="text-center relative z-10">
-                  <div className="font-mono text-sm md:text-base font-bold text-foreground text-glow">
+            <div className="glass-panel rounded-lg overflow-hidden">
+              {/* Image display */}
+              <div className="relative w-full h-40 md:h-52 overflow-hidden bg-background/50">
+                <img
+                  src={planet.gallery[galleryIndex].image}
+                  alt={planet.gallery[galleryIndex].title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.log("[v0] Image failed to load:", planet.gallery[galleryIndex].image)
+                  }}
+                />
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                
+                {/* Title and description overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                  <div className="font-mono text-sm md:text-base font-bold">
                     {planet.gallery[galleryIndex].title}
                   </div>
-                  <div className="font-mono text-[9px] md:text-[10px] text-muted-foreground/70 mt-1">
+                  <div className="font-mono text-[9px] md:text-[10px] text-foreground/70 mt-1">
                     {planet.gallery[galleryIndex].desc}
                   </div>
                 </div>
-                {/* Film grain overlay */}
-                <div className="absolute inset-0 opacity-10" style={{
-                  backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJmIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjgiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjZikiIG9wYWNpdHk9Ii40Ii8+PC9zdmc+')",
-                }} />
+
+                {/* Holo shimmer */}
+                <div className="absolute inset-0 holo-shimmer pointer-events-none" />
               </div>
+
               {/* Gallery controls */}
-              <div className="flex items-center justify-between">
+              <div className="p-3 flex items-center justify-between gap-2">
                 <button
                   onClick={() => {
                     sounds.play("click")
@@ -130,9 +133,21 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
                 >
                   {"<< PREV"}
                 </button>
-                <span className="font-mono text-[9px] text-muted-foreground/50">
-                  {galleryIndex + 1} / {planet.gallery.length}
-                </span>
+                <div className="flex items-center gap-1">
+                  {planet.gallery.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        sounds.play("click")
+                        setGalleryIndex(idx)
+                      }}
+                      className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${
+                        idx === galleryIndex ? "bg-primary scale-125" : "bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                      }`}
+                      aria-label={`Go to photo ${idx + 1}`}
+                    />
+                  ))}
+                </div>
                 <button
                   onClick={() => {
                     sounds.play("click")
