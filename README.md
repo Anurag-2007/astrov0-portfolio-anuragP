@@ -253,9 +253,9 @@ Copyright (c) 2024 Anurag Pandit
 
 # 🔗 Connect
 
-- Portfolio: https://astro-portfolio.vercel.app  
-- GitHub: https://github.com/anurag-2007  
-- LinkedIn: https://linkedin.com/in/anurag-pandit  
+- mail: panditanurag3101@gmail.com 
+- GitHub: https://github.com/Anurag-2007  
+- LinkedIn:[ Linkedin  ](https://www.linkedin.com/in/anurag-pandit-19673736a/)
 
 ---
 
