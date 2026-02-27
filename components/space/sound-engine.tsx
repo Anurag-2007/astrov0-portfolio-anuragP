@@ -447,35 +447,34 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
           break
         }
         case "supernova": {
-          // Subtle distant explosion - soft crackle with gentle shimmer
-          const noise = createNoise(ctx, 3)
+          // Massive low rumble with rising shimmer and shockwave
+          const noise = createNoise(ctx, 4)
           const filter = ctx.createBiquadFilter()
-          filter.type = "bandpass"
-          filter.frequency.setValueAtTime(400, now)
-          filter.frequency.exponentialRampToValueAtTime(2000, now + 0.8)
-          filter.frequency.exponentialRampToValueAtTime(300, now + 3)
-          filter.Q.value = 0.8
+          filter.type = "lowpass"
+          filter.frequency.setValueAtTime(80, now)
+          filter.frequency.exponentialRampToValueAtTime(6000, now + 1.5)
+          filter.frequency.exponentialRampToValueAtTime(200, now + 4)
           noise.connect(filter)
           filter.connect(gain)
           gain.gain.setValueAtTime(0.001, now)
-          gain.gain.linearRampToValueAtTime(vol * 0.12, now + 0.3)
-          gain.gain.linearRampToValueAtTime(vol * 0.18, now + 0.8)
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 3)
+          gain.gain.linearRampToValueAtTime(vol * 0.6, now + 0.8)
+          gain.gain.linearRampToValueAtTime(vol * 0.8, now + 1.5)
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 4)
           noise.start(now)
-          noise.stop(now + 3)
-          // Gentle tonal shimmer
+          noise.stop(now + 4)
+          // Rising shimmer
           const osc = ctx.createOscillator()
           osc.type = "sine"
-          osc.frequency.setValueAtTime(300, now + 0.2)
-          osc.frequency.exponentialRampToValueAtTime(800, now + 1.5)
-          osc.frequency.exponentialRampToValueAtTime(150, now + 3)
+          osc.frequency.setValueAtTime(200, now)
+          osc.frequency.exponentialRampToValueAtTime(3000, now + 2)
+          osc.frequency.exponentialRampToValueAtTime(100, now + 4)
           const sg = ctx.createGain()
           osc.connect(sg)
           sg.connect(master)
-          sg.gain.setValueAtTime(vol * 0.04, now + 0.3)
-          sg.gain.exponentialRampToValueAtTime(0.001, now + 3)
-          osc.start(now + 0.3)
-          osc.stop(now + 3)
+          sg.gain.setValueAtTime(vol * 0.15, now + 0.5)
+          sg.gain.exponentialRampToValueAtTime(0.001, now + 4)
+          osc.start(now + 0.5)
+          osc.stop(now + 4)
           break
         }
       }

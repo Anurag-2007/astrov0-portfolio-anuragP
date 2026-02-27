@@ -4,31 +4,9 @@ import { useRef, useMemo } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 
-// Create a soft circle texture for round stars
-function createStarTexture(): THREE.CanvasTexture {
-  const size = 64
-  const canvas = document.createElement("canvas")
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext("2d")!
-  const gradient = ctx.createRadialGradient(
-    size / 2, size / 2, 0,
-    size / 2, size / 2, size / 2
-  )
-  gradient.addColorStop(0, "rgba(255, 255, 255, 1)")
-  gradient.addColorStop(0.15, "rgba(255, 255, 255, 0.9)")
-  gradient.addColorStop(0.4, "rgba(255, 255, 255, 0.4)")
-  gradient.addColorStop(0.7, "rgba(255, 255, 255, 0.08)")
-  gradient.addColorStop(1, "rgba(255, 255, 255, 0)")
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, size, size)
-  return new THREE.CanvasTexture(canvas)
-}
-
 export function Starfield({ count = 5000 }) {
   const meshRef = useRef<THREE.Points>(null)
-
-  const starTexture = useMemo(() => createStarTexture(), [])
+  const twinkleRef = useRef<Float32Array | null>(null)
 
   const [positions, sizes, colors, baseSizes] = useMemo(() => {
     const pos = new Float32Array(count * 3)
@@ -50,22 +28,27 @@ export function Starfield({ count = 5000 }) {
       // Star color variety
       const temp = Math.random()
       if (temp < 0.3) {
+        // Blue/white hot stars
         col[i * 3] = 0.7 + Math.random() * 0.3
         col[i * 3 + 1] = 0.8 + Math.random() * 0.2
         col[i * 3 + 2] = 1
       } else if (temp < 0.5) {
+        // Yellow stars
         col[i * 3] = 1
         col[i * 3 + 1] = 0.9 + Math.random() * 0.1
         col[i * 3 + 2] = 0.6 + Math.random() * 0.2
       } else if (temp < 0.65) {
+        // Red giants
         col[i * 3] = 1
         col[i * 3 + 1] = 0.4 + Math.random() * 0.2
         col[i * 3 + 2] = 0.2 + Math.random() * 0.2
       } else if (temp < 0.8) {
+        // Cyan
         col[i * 3] = 0.3 + Math.random() * 0.2
         col[i * 3 + 1] = 0.8 + Math.random() * 0.2
         col[i * 3 + 2] = 0.9 + Math.random() * 0.1
       } else {
+        // White
         col[i * 3] = 0.9 + Math.random() * 0.1
         col[i * 3 + 1] = 0.9 + Math.random() * 0.1
         col[i * 3 + 2] = 0.9 + Math.random() * 0.1
@@ -75,6 +58,7 @@ export function Starfield({ count = 5000 }) {
     return [pos, s, col, base]
   }, [count])
 
+  // Store twinkle phases
   const twinklePhases = useMemo(() => {
     return new Float32Array(count).map(() => Math.random() * Math.PI * 2)
   }, [count])
@@ -84,6 +68,7 @@ export function Starfield({ count = 5000 }) {
       meshRef.current.rotation.y += delta * 0.001
       meshRef.current.rotation.x += delta * 0.0005
 
+      // Twinkle effect
       const t = state.clock.elapsedTime
       const sizeAttr = meshRef.current.geometry.attributes.size
       if (sizeAttr) {
@@ -100,19 +85,32 @@ export function Starfield({ count = 5000 }) {
   return (
     <points ref={meshRef}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
-        <bufferAttribute attach="attributes-size" count={count} array={sizes} itemSize={1} />
-        <bufferAttribute attach="attributes-color" count={count} array={colors} itemSize={3} />
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-size"
+          count={count}
+          array={sizes}
+          itemSize={1}
+        />
+        <bufferAttribute
+          attach="attributes-color"
+          count={count}
+          array={colors}
+          itemSize={3}
+        />
       </bufferGeometry>
       <pointsMaterial
         size={1.5}
-        map={starTexture}
         sizeAttenuation
         vertexColors
         transparent
         opacity={0.9}
         depthWrite={false}
-        alphaTest={0.01}
       />
     </points>
   )

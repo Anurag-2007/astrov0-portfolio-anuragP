@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useMemo, useState, useEffect } from "react"
+import { useRef, useMemo, useState } from "react"
 import { useFrame } from "@react-three/fiber"
 import { Html } from "@react-three/drei"
 import * as THREE from "three"
@@ -44,112 +44,10 @@ interface PlanetProps {
   time: number
 }
 
-// Create a procedural planet texture
-function createPlanetTexture(baseColor: string, seed: number): THREE.CanvasTexture {
-  const size = 256
-  const canvas = document.createElement("canvas")
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext("2d")!
-
-  // Parse base color
-  const tempCanvas = document.createElement("canvas")
-  tempCanvas.width = 1
-  tempCanvas.height = 1
-  const tempCtx = tempCanvas.getContext("2d")!
-  tempCtx.fillStyle = baseColor
-  tempCtx.fillRect(0, 0, 1, 1)
-  const [r, g, b] = tempCtx.getImageData(0, 0, 1, 1).data
-
-  // Fill base
-  ctx.fillStyle = baseColor
-  ctx.fillRect(0, 0, size, size)
-
-  // Add noise-like surface detail
-  const imageData = ctx.getImageData(0, 0, size, size)
-  const data = imageData.data
-
-  // Simple pseudo-random based on seed
-  let s = seed
-  const rand = () => {
-    s = (s * 16807 + 0) % 2147483647
-    return (s & 0x7fffffff) / 2147483647
-  }
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 4
-      // Create band-like patterns (latitude lines)
-      const lat = Math.sin((y / size) * Math.PI * 3 + seed) * 0.15
-      // Create longitude variation
-      const lon = Math.sin((x / size) * Math.PI * 5 + seed * 2) * 0.08
-      // Add fine noise
-      const noise = (rand() - 0.5) * 0.12
-      // Combine
-      const variation = lat + lon + noise
-
-      data[idx] = Math.max(0, Math.min(255, r + r * variation))
-      data[idx + 1] = Math.max(0, Math.min(255, g + g * variation))
-      data[idx + 2] = Math.max(0, Math.min(255, b + b * variation))
-    }
-  }
-
-  ctx.putImageData(imageData, 0, 0)
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.RepeatWrapping
-  return texture
-}
-
-// Create a procedural ring texture with gaps
-function createRingTexture(baseColor: string): THREE.CanvasTexture {
-  const width = 256
-  const height = 1
-  const canvas = document.createElement("canvas")
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext("2d")!
-
-  const tempCanvas = document.createElement("canvas")
-  tempCanvas.width = 1
-  tempCanvas.height = 1
-  const tempCtx = tempCanvas.getContext("2d")!
-  tempCtx.fillStyle = baseColor
-  tempCtx.fillRect(0, 0, 1, 1)
-  const [r, g, b] = tempCtx.getImageData(0, 0, 1, 1).data
-
-  const imageData = ctx.createImageData(width, height)
-  const data = imageData.data
-
-  for (let x = 0; x < width; x++) {
-    const t = x / width
-    // Create ring gaps with varying opacity
-    const ringPattern =
-      Math.sin(t * Math.PI * 12) * 0.3 +
-      Math.sin(t * Math.PI * 24) * 0.15 +
-      Math.sin(t * Math.PI * 48) * 0.08
-    const opacity = Math.max(0, 0.4 + ringPattern) * (1 - t * 0.6)
-
-    const idx = x * 4
-    data[idx] = Math.min(255, r + 30)
-    data[idx + 1] = Math.min(255, g + 20)
-    data[idx + 2] = Math.min(255, b + 10)
-    data[idx + 3] = Math.round(opacity * 255)
-  }
-
-  ctx.putImageData(imageData, 0, 0)
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  return texture
-}
-
 export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
-  const atmosphere2Ref = useRef<THREE.Mesh>(null)
   const selectionRingRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
@@ -161,34 +59,22 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
   const z = Math.sin(angle) * data.orbitRadius
   const tilt = data.tilt ?? 0
 
-  // Procedural texture
-  const planetTexture = useMemo(() => {
-    return createPlanetTexture(data.color, data.orbitRadius * 1000)
-  }, [data.color, data.orbitRadius])
-
-  // Ring texture
-  const ringTexture = useMemo(() => {
-    if (!data.hasRing) return null
-    return createRingTexture(data.ringColor || data.color)
-  }, [data.hasRing, data.ringColor, data.color])
-
   // Moon positions
   const moonData = useMemo(
     () =>
       Array.from({ length: data.moons || 0 }, (_, i) => ({
-        distance: data.size * 2.2 + 0.5 + i * 0.8,
+        distance: data.size * 2 + 0.5 + i * 0.8,
         speed: 0.8 + i * 0.3,
-        size: 0.08 + Math.random() * 0.12,
+        size: 0.1 + Math.random() * 0.15,
         offset: (i * Math.PI * 2) / (data.moons || 1),
         color: "#aaaacc",
-        tilt: Math.random() * 0.5,
       })),
     [data.moons, data.size]
   )
 
   useFrame(() => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.004
+      meshRef.current.rotation.y += 0.005
       meshRef.current.position.set(x, 0, z)
     }
     if (glowRef.current) {
@@ -199,13 +85,8 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
     }
     if (atmosphereRef.current) {
       atmosphereRef.current.position.set(x, 0, z)
-      const breathe = 1 + Math.sin(time * 1.5) * 0.015
+      const breathe = 1 + Math.sin(time * 1.5) * 0.02
       atmosphereRef.current.scale.setScalar(breathe)
-    }
-    if (atmosphere2Ref.current) {
-      atmosphere2Ref.current.position.set(x, 0, z)
-      const breathe = 1 + Math.sin(time * 1.2 + 1) * 0.01
-      atmosphere2Ref.current.scale.setScalar(breathe)
     }
     if (selectionRingRef.current) {
       selectionRingRef.current.position.set(x, 0, z)
@@ -219,6 +100,7 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
 
   const glowColor = useMemo(() => new THREE.Color(data.emissive), [data.emissive])
 
+  // Toggle skill panel on select for skills planet
   const handleClick = (e: { stopPropagation: () => void }) => {
     e.stopPropagation()
     if (data.isSkillsPlanet) {
@@ -229,13 +111,13 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
 
   return (
     <group ref={groupRef}>
-      {/* Orbit ring - dashed look */}
+      {/* Orbit ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[data.orbitRadius - 0.04, data.orbitRadius + 0.04, 256]} />
+        <ringGeometry args={[data.orbitRadius - 0.05, data.orbitRadius + 0.05, 256]} />
         <meshBasicMaterial
           color={data.color}
           transparent
-          opacity={isSelected ? 0.25 : 0.05}
+          opacity={isSelected ? 0.2 : 0.06}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -243,17 +125,17 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
       {/* Orbit glow when selected */}
       {isSelected && (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[data.orbitRadius - 0.15, data.orbitRadius + 0.15, 256]} />
+          <ringGeometry args={[data.orbitRadius - 0.2, data.orbitRadius + 0.2, 256]} />
           <meshBasicMaterial
             color={data.color}
             transparent
-            opacity={0.06}
+            opacity={0.05}
             side={THREE.DoubleSide}
           />
         </mesh>
       )}
 
-      {/* Planet body - with procedural texture */}
+      {/* Planet body */}
       <mesh
         ref={meshRef}
         onClick={handleClick}
@@ -269,37 +151,37 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
       >
         <sphereGeometry args={[data.size, 64, 64]} />
         <meshStandardMaterial
-          map={planetTexture}
+          color={data.color}
           emissive={data.emissive}
-          emissiveIntensity={hovered || isSelected ? 0.6 : 0.2}
-          roughness={0.4}
-          metalness={0.15}
-          bumpScale={0.02}
+          emissiveIntensity={hovered || isSelected ? 0.8 : 0.3}
+          roughness={0.3}
+          metalness={0.2}
         />
 
-        {/* Planet ring system */}
-        {data.hasRing && ringTexture && (
-          <group rotation={[Math.PI / 2.2, 0.1, 0]}>
-            <mesh>
-              <ringGeometry args={[data.size * 1.4, data.size * 2.4, 128]} />
-              <meshBasicMaterial
-                map={ringTexture}
-                transparent
-                opacity={0.5}
-                side={THREE.DoubleSide}
-              />
-            </mesh>
-            {/* Ring shadow / inner detail */}
-            <mesh>
-              <ringGeometry args={[data.size * 1.15, data.size * 1.4, 64]} />
-              <meshBasicMaterial
-                color={data.ringColor || data.color}
-                transparent
-                opacity={0.12}
-                side={THREE.DoubleSide}
-              />
-            </mesh>
-          </group>
+        {/* Planet ring (like Saturn) */}
+        {data.hasRing && (
+          <mesh rotation={[Math.PI / 2.2, 0.1, 0]}>
+            <ringGeometry args={[data.size * 1.4, data.size * 2.2, 64]} />
+            <meshBasicMaterial
+              color={data.ringColor || data.color}
+              transparent
+              opacity={0.35}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        )}
+
+        {/* Inner ring for ringed planets */}
+        {data.hasRing && (
+          <mesh rotation={[Math.PI / 2.2, 0.1, 0]}>
+            <ringGeometry args={[data.size * 1.2, data.size * 1.4, 64]} />
+            <meshBasicMaterial
+              color={data.ringColor || data.color}
+              transparent
+              opacity={0.15}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
         )}
 
         {/* Planet label */}
@@ -319,27 +201,14 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
         )}
       </mesh>
 
-      {/* Atmosphere glow - inner */}
+      {/* Atmosphere glow */}
       {data.hasAtmosphere && (
         <mesh ref={atmosphereRef}>
-          <sphereGeometry args={[data.size * 1.08, 48, 48]} />
+          <sphereGeometry args={[data.size * 1.15, 32, 32]} />
           <meshBasicMaterial
             color={data.atmosphereColor || data.color}
             transparent
-            opacity={hovered || isSelected ? 0.1 : 0.04}
-            side={THREE.BackSide}
-          />
-        </mesh>
-      )}
-
-      {/* Atmosphere glow - outer haze */}
-      {data.hasAtmosphere && (
-        <mesh ref={atmosphere2Ref}>
-          <sphereGeometry args={[data.size * 1.25, 32, 32]} />
-          <meshBasicMaterial
-            color={data.atmosphereColor || data.color}
-            transparent
-            opacity={hovered || isSelected ? 0.05 : 0.015}
+            opacity={hovered || isSelected ? 0.12 : 0.05}
             side={THREE.BackSide}
           />
         </mesh>
@@ -351,7 +220,7 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
         <meshBasicMaterial
           color={glowColor}
           transparent
-          opacity={hovered || isSelected ? 0.12 : 0.04}
+          opacity={hovered || isSelected ? 0.15 : 0.05}
           side={THREE.BackSide}
         />
       </mesh>
@@ -367,7 +236,6 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
           size={moon.size}
           color={moon.color}
           offset={moon.offset}
-          tilt={moon.tilt}
           time={time}
         />
       ))}
@@ -375,11 +243,11 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
       {/* Selection ring */}
       {isSelected && (
         <mesh ref={selectionRingRef}>
-          <ringGeometry args={[data.size * 1.5, data.size * 1.65, 64]} />
+          <ringGeometry args={[data.size * 1.5, data.size * 1.7, 64]} />
           <meshBasicMaterial
             color={data.color}
             transparent
-            opacity={0.35}
+            opacity={0.4}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -390,15 +258,18 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
         <pointLight
           position={[x, 0, z]}
           color={data.color}
-          intensity={isSelected ? 4 : 1.5}
+          intensity={isSelected ? 5 : 2}
           distance={data.size * 10}
           decay={2}
         />
       )}
 
-      {/* Skill panels */}
+      {/* Holographic skill panels - only for skills planet when selected */}
       {data.isSkillsPlanet && isSelected && showSkillPanel && data.skills && (
-        <Html position={[x + data.size * 3, 2, z]} distanceFactor={15}>
+        <Html
+          position={[x + data.size * 3, 2, z]}
+          distanceFactor={15}
+        >
           <div className="pointer-events-auto glass-panel-bright rounded-lg p-3 w-56">
             <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-border/30">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -443,73 +314,6 @@ export function Planet({ data, isSelected, onSelect, time }: PlanetProps) {
           </div>
         </Html>
       )}
-
-      {/* Astronaut spaceship landing */}
-      {isSelected && (
-        <AstronautShip planetX={x} planetZ={z} planetSize={data.size} time={time} />
-      )}
-    </group>
-  )
-}
-
-function AstronautShip({ planetX, planetZ, planetSize, time }: {
-  planetX: number; planetZ: number; planetSize: number; time: number
-}) {
-  const groupRef = useRef<THREE.Group>(null)
-  const [landProgress, setLandProgress] = useState(0)
-  const startTime = useRef(time)
-
-  useEffect(() => {
-    startTime.current = time
-    setLandProgress(0)
-  }, [planetX, planetZ])
-
-  useFrame(() => {
-    if (!groupRef.current) return
-    const elapsed = time - startTime.current
-    const progress = Math.min(1, elapsed * 0.8)
-    setLandProgress(progress)
-
-    const ease = 1 - Math.pow(1 - progress, 3)
-    const startOff = 8
-    const endOff = planetSize + 0.25
-    const currentDist = startOff - (startOff - endOff) * ease
-    const arcHeight = Math.sin(ease * Math.PI) * 2 * (1 - ease)
-
-    groupRef.current.position.set(
-      planetX + currentDist * 0.7,
-      arcHeight + endOff * 0.6 * ease,
-      planetZ + currentDist * 0.4
-    )
-    groupRef.current.lookAt(planetX, 0, planetZ)
-    groupRef.current.rotation.z = (1 - ease) * 0.3
-  })
-
-  return (
-    <group ref={groupRef}>
-      <mesh>
-        <capsuleGeometry args={[0.06, 0.15, 4, 8]} />
-        <meshStandardMaterial color="#ccccdd" emissive="#4488aa" emissiveIntensity={0.5} metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[0, 0.05, 0.06]}>
-        <sphereGeometry args={[0.035, 8, 8]} />
-        <meshBasicMaterial color="#00ddff" transparent opacity={0.8} />
-      </mesh>
-      {landProgress < 0.9 && (
-        <mesh position={[0, -0.12, -0.02]}>
-          <coneGeometry args={[0.04, 0.15 + (1 - landProgress) * 0.2, 6]} />
-          <meshBasicMaterial color="#ff6622" transparent opacity={0.6 * (1 - landProgress)} />
-        </mesh>
-      )}
-      {landProgress < 0.85 && (
-        <pointLight position={[0, -0.15, 0]} color="#ff4400" intensity={3 * (1 - landProgress)} distance={2} decay={2} />
-      )}
-      {landProgress > 0.95 && (
-        <mesh position={[0, 0.15, 0]}>
-          <sphereGeometry args={[0.02, 8, 8]} />
-          <meshBasicMaterial color="#00ff88" transparent opacity={0.8} />
-        </mesh>
-      )}
     </group>
   )
 }
@@ -522,7 +326,6 @@ function Moon({
   size,
   color,
   offset,
-  tilt,
   time,
 }: {
   parentX: number
@@ -532,7 +335,6 @@ function Moon({
   size: number
   color: string
   offset: number
-  tilt: number
   time: number
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
@@ -542,7 +344,7 @@ function Moon({
       const a = time * speed + offset
       meshRef.current.position.set(
         parentX + Math.cos(a) * distance,
-        Math.sin(a * 0.5 + tilt) * 0.4,
+        Math.sin(a * 0.5) * 0.3,
         parentZ + Math.sin(a) * distance
       )
       meshRef.current.rotation.y += 0.01
@@ -555,9 +357,9 @@ function Moon({
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={0.15}
-        roughness={0.9}
-        metalness={0.05}
+        emissiveIntensity={0.2}
+        roughness={0.8}
+        metalness={0.1}
       />
     </mesh>
   )

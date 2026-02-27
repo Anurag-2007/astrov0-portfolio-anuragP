@@ -3,27 +3,6 @@
 import { useRef, useMemo, useState } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { useSounds } from "./sound-engine"
-
-// Soft glow texture for nebula particles
-function createNebulaTexture(): THREE.CanvasTexture {
-  const size = 64
-  const canvas = document.createElement("canvas")
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext("2d")!
-  const gradient = ctx.createRadialGradient(
-    size / 2, size / 2, 0,
-    size / 2, size / 2, size / 2
-  )
-  gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)")
-  gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.5)")
-  gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.15)")
-  gradient.addColorStop(1, "rgba(255, 255, 255, 0)")
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, size, size)
-  return new THREE.CanvasTexture(canvas)
-}
 
 export function Nebula() {
   const group1Ref = useRef<THREE.Points>(null)
@@ -32,9 +11,6 @@ export function Nebula() {
   const explosionRef = useRef<THREE.Points>(null)
   const [explosion, setExplosion] = useState(false)
   const explosionTime = useRef(0)
-  const sounds = useSounds()
-
-  const nebulaTexture = useMemo(() => createNebulaTexture(), [])
 
   const [positions1, positions2, positions3, explosionPositions] = useMemo(() => {
     const createCloud = (
@@ -106,11 +82,10 @@ export function Nebula() {
       group3Ref.current.rotation.z += delta * 0.0003
     }
 
-    // Trigger random explosions with supernova sound
+    // Trigger random explosions
     if (!explosion && Math.random() < 0.0005) {
       setExplosion(true)
       explosionTime.current = 0
-      sounds.play("supernova")
     }
 
     // Animate explosion
@@ -148,14 +123,12 @@ export function Nebula() {
           <bufferAttribute attach="attributes-position" count={800} array={positions1} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial
-          size={3}
-          map={nebulaTexture}
+          size={2.5}
           color="#00c8dc"
           transparent
-          opacity={0.15}
+          opacity={0.12}
           depthWrite={false}
           sizeAttenuation
-          alphaTest={0.01}
         />
       </points>
 
@@ -165,14 +138,12 @@ export function Nebula() {
           <bufferAttribute attach="attributes-position" count={600} array={positions2} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial
-          size={3.5}
-          map={nebulaTexture}
+          size={3}
           color="#ff6600"
           transparent
-          opacity={0.1}
+          opacity={0.08}
           depthWrite={false}
           sizeAttenuation
-          alphaTest={0.01}
         />
       </points>
 
@@ -182,14 +153,12 @@ export function Nebula() {
           <bufferAttribute attach="attributes-position" count={500} array={positions3} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial
-          size={2.5}
-          map={nebulaTexture}
+          size={2}
           color="#cc44ff"
           transparent
-          opacity={0.08}
+          opacity={0.06}
           depthWrite={false}
           sizeAttenuation
-          alphaTest={0.01}
         />
       </points>
 
@@ -226,13 +195,11 @@ export function Nebula() {
             </bufferGeometry>
             <pointsMaterial
               size={1.5}
-              map={nebulaTexture}
               color="#ffaa00"
               transparent
               opacity={Math.max(0, 0.8 - explosionTime.current / 3)}
               depthWrite={false}
               sizeAttenuation
-              alphaTest={0.01}
             />
           </points>
           {/* Explosion flash */}

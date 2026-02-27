@@ -34,11 +34,10 @@ interface FloatingText {
 
 export function BlackHole() {
   const diskRef = useRef<THREE.Mesh>(null)
-  const innerDiskRef = useRef<THREE.Mesh>(null)
-  const photonRingRef = useRef<THREE.Mesh>(null)
+  const ring1Ref = useRef<THREE.Mesh>(null)
+  const ring2Ref = useRef<THREE.Mesh>(null)
   const particlesRef = useRef<THREE.Points>(null)
   const jetRef = useRef<THREE.Points>(null)
-  const distortionRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
   const [sucking, setSucking] = useState(false)
   const [score, setScore] = useState(0)
@@ -52,63 +51,41 @@ export function BlackHole() {
   const clickCount = useRef(0)
   const sounds = useSounds()
 
-  const diskPosition = useMemo(() => new THREE.Vector3(55, 5, -35), [])
+  const diskPosition = useMemo(() => new THREE.Vector3(65, 5, -45), [])
 
-  // Accretion disk particles - dense, colorful ring
-  const [diskParticles, diskColors, diskSizes] = useMemo(() => {
-    const count = 3000
+  // Accretion disk particles
+  const [diskParticles, diskColors] = useMemo(() => {
+    const count = 1500
     const pos = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
-    const sizes = new Float32Array(count)
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
-      const r = 4.5 + Math.pow(Math.random(), 0.7) * 12
-      const height = (Math.random() - 0.5) * (0.3 + (r - 4.5) * 0.03)
+      const r = 3 + Math.random() * 6
+      const height = (Math.random() - 0.5) * 0.5
       pos[i * 3] = Math.cos(angle) * r
       pos[i * 3 + 1] = height
       pos[i * 3 + 2] = Math.sin(angle) * r
-      // Color gradient: hot white/blue near center -> orange -> red at edges
-      const t = (r - 4.5) / 12
-      if (t < 0.2) {
-        // White-hot inner region
-        colors[i * 3] = 1
-        colors[i * 3 + 1] = 0.9 + (1 - t / 0.2) * 0.1
-        colors[i * 3 + 2] = 0.7 + (1 - t / 0.2) * 0.3
-      } else if (t < 0.5) {
-        // Orange mid region
-        colors[i * 3] = 1
-        colors[i * 3 + 1] = 0.5 + (1 - t) * 0.4
-        colors[i * 3 + 2] = 0.1 + (1 - t) * 0.2
-      } else {
-        // Deep red outer region
-        colors[i * 3] = 0.8 + Math.random() * 0.2
-        colors[i * 3 + 1] = 0.15 + Math.random() * 0.15
-        colors[i * 3 + 2] = 0.05
-      }
-      sizes[i] = 0.08 + Math.random() * 0.15 * (1 - t * 0.5)
+      const t = (r - 3) / 6
+      colors[i * 3] = 1
+      colors[i * 3 + 1] = 0.3 + t * 0.4
+      colors[i * 3 + 2] = t * 0.2
     }
-    return [pos, colors, sizes]
+    return [pos, colors]
   }, [])
 
-  // Jet particles - relativistic jets
-  const [jetParticles, jetColors] = useMemo(() => {
-    const count = 400
+  // Jet particles
+  const jetParticles = useMemo(() => {
+    const count = 300
     const pos = new Float32Array(count * 3)
-    const cols = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
-      const spread = Math.random() * 0.8
-      const height = (Math.random() - 0.5) * 40
+      const spread = Math.random() * 0.5
+      const height = (Math.random() - 0.5) * 30
       const angle = Math.random() * Math.PI * 2
-      pos[i * 3] = Math.cos(angle) * spread * (1 + Math.abs(height) * 0.02)
+      pos[i * 3] = Math.cos(angle) * spread
       pos[i * 3 + 1] = height
-      pos[i * 3 + 2] = Math.sin(angle) * spread * (1 + Math.abs(height) * 0.02)
-      // Blue-purple jet color
-      const dist = Math.abs(height) / 20
-      cols[i * 3] = 0.4 + dist * 0.3
-      cols[i * 3 + 1] = 0.4 + dist * 0.2
-      cols[i * 3 + 2] = 0.9 + Math.random() * 0.1
+      pos[i * 3 + 2] = Math.sin(angle) * spread
     }
-    return [pos, cols]
+    return pos
   }, [])
 
   const spawnWord = useCallback(() => {
@@ -143,54 +120,30 @@ export function BlackHole() {
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime
-
-    // Rotate accretion disk
     if (diskRef.current) {
-      diskRef.current.rotation.z += 0.006
+      diskRef.current.rotation.z += 0.008
+      diskRef.current.rotation.x = Math.PI / 2.5 + Math.sin(t * 0.2) * 0.05
     }
-    if (innerDiskRef.current) {
-      innerDiskRef.current.rotation.z += 0.012
-    }
+    if (ring1Ref.current) ring1Ref.current.rotation.z -= 0.003
+    if (ring2Ref.current) ring2Ref.current.rotation.z += 0.005
 
-    // Photon ring shimmer
-    if (photonRingRef.current) {
-      const pulse = Math.sin(t * 3) * 0.02
-      photonRingRef.current.scale.setScalar(1 + pulse)
-    }
-
-    // Accretion disk particles orbit
     if (particlesRef.current) {
-      particlesRef.current.rotation.y += 0.008
-      particlesRef.current.rotation.x = Math.PI / 2.3 + Math.sin(t * 0.15) * 0.03
-      const scale = hovered ? 1.05 : 1
-      particlesRef.current.scale.lerp(
-        new THREE.Vector3(scale, scale, scale),
-        0.05
-      )
+      particlesRef.current.rotation.y += 0.01
+      particlesRef.current.rotation.x = Math.PI / 2.5
+      const scale = hovered ? 1.1 : 1
+      particlesRef.current.scale.setScalar(scale)
     }
 
-    // Animate jets
     if (jetRef.current) {
-      jetRef.current.rotation.y += 0.003
+      jetRef.current.rotation.y += 0.002
       const positions = jetRef.current.geometry.attributes.position.array as Float32Array
       for (let i = 0; i < positions.length / 3; i++) {
-        const dir = positions[i * 3 + 1] > 0 ? 1 : -1
-        positions[i * 3 + 1] += dir * 0.12
-        if (Math.abs(positions[i * 3 + 1]) > 20) {
-          const spread = Math.random() * 0.5
-          const angle = Math.random() * Math.PI * 2
-          positions[i * 3] = Math.cos(angle) * spread
-          positions[i * 3 + 1] = dir * (Math.random() * 2)
-          positions[i * 3 + 2] = Math.sin(angle) * spread
+        positions[i * 3 + 1] += (positions[i * 3 + 1] > 0 ? 0.15 : -0.15)
+        if (Math.abs(positions[i * 3 + 1]) > 15) {
+          positions[i * 3 + 1] = (Math.random() - 0.5) * 2
         }
       }
       jetRef.current.geometry.attributes.position.needsUpdate = true
-    }
-
-    // Distortion field
-    if (distortionRef.current) {
-      const breathe = 1 + Math.sin(t * 0.5) * 0.08 + Math.sin(t * 1.3) * 0.03
-      distortionRef.current.scale.setScalar(breathe)
     }
 
     if (sucking) {
@@ -243,6 +196,7 @@ export function BlackHole() {
       e.stopPropagation()
       clickCount.current++
 
+      // Every 3rd click opens the archive
       if (clickCount.current % 3 === 0) {
         setShowArchive(true)
         setArchiveIndex((i) => (i + 1) % ARCHIVE_ENTRIES.length)
@@ -265,7 +219,7 @@ export function BlackHole() {
 
   return (
     <group position={diskPosition}>
-      {/* === EVENT HORIZON (pure black sphere) === */}
+      {/* Core */}
       <mesh
         onClick={handleClick}
         onPointerOver={(e) => {
@@ -278,128 +232,74 @@ export function BlackHole() {
           document.body.style.cursor = "default"
         }}
       >
-        <sphereGeometry args={[3.5, 64, 64]} />
+        <sphereGeometry args={[2, 64, 64]} />
         <meshBasicMaterial color="#000000" />
       </mesh>
 
-      {/* === PHOTON SPHERE - bright thin ring at event horizon boundary === */}
-      <mesh ref={photonRingRef} rotation={[Math.PI / 2.3, 0, 0]}>
-        <torusGeometry args={[3.7, 0.12, 32, 128]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={hovered ? 0.95 : 0.7}
-        />
-      </mesh>
-
-      {/* Secondary photon ring - slightly offset for depth */}
-      <mesh rotation={[Math.PI / 2.3 + 0.15, 0.1, 0]}>
-        <torusGeometry args={[3.85, 0.06, 16, 128]} />
-        <meshBasicMaterial
-          color="#ffcc66"
-          transparent
-          opacity={hovered ? 0.6 : 0.35}
-        />
-      </mesh>
-
-      {/* Thin Einstein ring */}
-      <mesh rotation={[Math.PI / 2.6, -0.1, 0.05]}>
-        <torusGeometry args={[4.2, 0.03, 16, 128]} />
-        <meshBasicMaterial
-          color="#ff8844"
-          transparent
-          opacity={hovered ? 0.4 : 0.2}
-        />
-      </mesh>
-
-      {/* === GRAVITATIONAL LENSING DISTORTION FIELD === */}
-      <mesh ref={distortionRef}>
-        <sphereGeometry args={[5, 32, 32]} />
-        <meshBasicMaterial
-          color={sucking ? "#ff2200" : "#ff6600"}
-          transparent
-          opacity={hovered ? 0.06 : 0.025}
-          side={THREE.BackSide}
-        />
-      </mesh>
-
-      {/* Outer gravitational influence sphere */}
+      {/* Event horizon glow */}
       <mesh>
-        <sphereGeometry args={[10, 24, 24]} />
+        <sphereGeometry args={[2.1, 64, 64]} />
         <meshBasicMaterial
-          color="#ff4400"
+          color={sucking ? "#ff2200" : "#ff4400"}
           transparent
-          opacity={hovered ? 0.025 : 0.008}
+          opacity={hovered ? 0.25 : 0.1}
           side={THREE.BackSide}
         />
       </mesh>
 
-      {/* === ACCRETION DISK - outer layer === */}
-      <mesh ref={diskRef} rotation={[Math.PI / 2.3, 0, 0]}>
-        <ringGeometry args={[5, 16, 128]} />
-        <meshBasicMaterial
-          color="#ff6600"
-          transparent
-          opacity={0.25}
-          side={THREE.DoubleSide}
-        />
+      {/* Gravitational lensing ring */}
+      <mesh>
+        <torusGeometry args={[2.15, 0.05, 16, 128]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={hovered ? 0.6 : 0.3} />
       </mesh>
 
-      {/* Accretion disk - hot inner ring */}
-      <mesh ref={innerDiskRef} rotation={[Math.PI / 2.3, 0, 0]}>
-        <ringGeometry args={[4.2, 6, 128]} />
-        <meshBasicMaterial
-          color="#ffaa44"
-          transparent
-          opacity={0.35}
-          side={THREE.DoubleSide}
-        />
+      {/* Second lensing ring - offset */}
+      <mesh rotation={[0.3, 0.2, 0]}>
+        <torusGeometry args={[2.6, 0.03, 16, 128]} />
+        <meshBasicMaterial color="#ffaa44" transparent opacity={hovered ? 0.3 : 0.1} />
+      </mesh>
+
+      {/* Accretion disk */}
+      <mesh ref={diskRef} rotation={[Math.PI / 2.5, 0, 0]}>
+        <ringGeometry args={[3, 8, 128]} />
+        <meshBasicMaterial color="#ff6600" transparent opacity={0.3} side={THREE.DoubleSide} />
       </mesh>
 
       {/* Accretion disk particles */}
       <points ref={particlesRef}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={3000} array={diskParticles} itemSize={3} />
-          <bufferAttribute attach="attributes-color" count={3000} array={diskColors} itemSize={3} />
+          <bufferAttribute attach="attributes-position" count={1500} array={diskParticles} itemSize={3} />
+          <bufferAttribute attach="attributes-color" count={1500} array={diskColors} itemSize={3} />
         </bufferGeometry>
-        <pointsMaterial
-          size={0.15}
-          vertexColors
-          transparent
-          opacity={0.8}
-          depthWrite={false}
-          sizeAttenuation
-        />
+        <pointsMaterial size={0.15} vertexColors transparent opacity={0.7} depthWrite={false} sizeAttenuation />
       </points>
 
-      {/* === RELATIVISTIC JETS === */}
+      {/* Relativistic jets */}
       <points ref={jetRef}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={400} array={jetParticles} itemSize={3} />
-          <bufferAttribute attach="attributes-color" count={400} array={jetColors} itemSize={3} />
+          <bufferAttribute attach="attributes-position" count={300} array={jetParticles} itemSize={3} />
         </bufferGeometry>
-        <pointsMaterial
-          size={0.12}
-          vertexColors
-          transparent
-          opacity={0.35}
-          depthWrite={false}
-          sizeAttenuation
-        />
+        <pointsMaterial size={0.1} color="#8888ff" transparent opacity={0.3} depthWrite={false} sizeAttenuation />
       </points>
 
-      {/* Jet glow lights */}
-      <pointLight position={[0, 8, 0]} color="#6666ff" intensity={8} distance={25} decay={2} />
-      <pointLight position={[0, -8, 0]} color="#6666ff" intensity={8} distance={25} decay={2} />
+      {/* Inner rings */}
+      <mesh ref={ring1Ref} rotation={[Math.PI / 2.5, 0.2, 0]}>
+        <ringGeometry args={[2.5, 4, 128]} />
+        <meshBasicMaterial color="#ff8800" transparent opacity={0.3} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh ref={ring2Ref} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[2.2, 3, 128]} />
+        <meshBasicMaterial color="#ffaa00" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
 
       {/* Suck vortex effect */}
       {sucking && (
-        <mesh rotation={[Math.PI / 2.3, 0, 0]}>
-          <ringGeometry args={[1, 16 * suckProgress.current + 4, 64]} />
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.5, 10 * suckProgress.current + 2, 64]} />
           <meshBasicMaterial
             color="#ff4400"
             transparent
-            opacity={0.12 * (1 - suckProgress.current)}
+            opacity={0.15 * (1 - suckProgress.current)}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -432,7 +332,7 @@ export function BlackHole() {
         </Html>
       ))}
 
-      {/* Archive overlay */}
+      {/* Archive overlay - appears near the event horizon */}
       {showArchive && (
         <Html center distanceFactor={20} position={[0, 8, 0]} style={{ pointerEvents: "none" }}>
           <div className="glass-panel-bright rounded-lg px-4 py-3 w-64 text-center">
@@ -478,20 +378,11 @@ export function BlackHole() {
         </Html>
       )}
 
-      {/* Main light source */}
       <pointLight
         color={sucking ? "#ff2200" : "#ff4400"}
-        intensity={hovered ? 60 : 30}
-        distance={80}
+        intensity={hovered ? 40 : 20}
+        distance={50}
         decay={2}
-      />
-      {/* Accretion glow */}
-      <pointLight
-        color="#ffaa44"
-        intensity={hovered ? 15 : 8}
-        distance={40}
-        decay={2}
-        position={[0, 2, 0]}
       />
     </group>
   )

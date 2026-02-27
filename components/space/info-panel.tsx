@@ -9,15 +9,6 @@ interface InfoPanelProps {
   onClose: () => void
 }
 
-const GALLERY_PHOTOS = [
-  "/photos/photo1.jpg",
-  "/photos/photo2.jpg",
-  "/photos/photo3.jpg",
-  "/photos/photo4.jpg",
-  "/photos/photo5.jpg",
-  "/photos/photo6.jpg",
-]
-
 export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
   const [visible, setVisible] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
@@ -102,68 +93,53 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
         {/* Photography Gallery Carousel */}
         {isGallery && planet.gallery && (
           <div className="px-3 md:px-4 py-2 md:py-3 border-b border-border/30">
-            <div className="glass-panel rounded-lg overflow-hidden">
-              {/* Real photo image */}
-              <div className="relative w-full h-40 md:h-52 overflow-hidden">
-                <img
-                  src={GALLERY_PHOTOS[galleryIndex % GALLERY_PHOTOS.length]}
-                  alt={planet.gallery[galleryIndex].title}
-                  className="w-full h-full object-cover transition-all duration-700 ease-out"
-                  style={{ filter: "brightness(0.85) contrast(1.1)" }}
-                  crossOrigin="anonymous"
-                />
-                {/* Scan line overlay on photo */}
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/60" />
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div className="absolute left-0 w-full h-px bg-primary/20 animate-scan-line" style={{ animationDuration: "4s" }} />
-                </div>
-                {/* Photo counter badge */}
-                <div className="absolute top-2 right-2 glass-panel rounded px-2 py-0.5">
-                  <span className="font-mono text-[9px] text-primary">
-                    {galleryIndex + 1} / {planet.gallery.length}
-                  </span>
-                </div>
-              </div>
-              {/* Caption + controls */}
-              <div className="p-3">
-                <div className="font-mono text-xs font-semibold text-foreground/90 mb-0.5">
-                  {planet.gallery[galleryIndex].title}
-                </div>
-                <div className="font-mono text-[9px] text-muted-foreground/60 mb-2">
-                  {planet.gallery[galleryIndex].desc}
-                </div>
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => {
-                      sounds.play("click")
-                      setGalleryIndex((i) => (i - 1 + planet.gallery!.length) % planet.gallery!.length)
-                    }}
-                    className="font-mono text-[10px] text-primary hover:text-foreground transition-colors cursor-pointer px-2 py-1 glass-panel rounded"
-                    aria-label="Previous photo"
-                  >
-                    {"<< PREV"}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {planet.gallery.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => { sounds.play("click"); setGalleryIndex(idx) }}
-                        className={`w-1.5 h-1.5 rounded-full cursor-pointer transition-all ${idx === galleryIndex ? "bg-primary scale-125" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"}`}
-                        aria-label={`Go to photo ${idx + 1}`}
-                      />
-                    ))}
+            <div className="glass-panel rounded-lg p-3 md:p-4 relative overflow-hidden">
+              {/* Placeholder image area with generated gradient */}
+              <div
+                className="w-full h-28 md:h-36 rounded-md mb-2 md:mb-3 flex items-center justify-center relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${planet.color}33, ${planet.emissive}88, ${planet.color}22)`,
+                }}
+              >
+                <div className="absolute inset-0 holo-shimmer" />
+                <div className="text-center relative z-10">
+                  <div className="font-mono text-sm md:text-base font-bold text-foreground text-glow">
+                    {planet.gallery[galleryIndex].title}
                   </div>
-                  <button
-                    onClick={() => {
-                      sounds.play("click")
-                      setGalleryIndex((i) => (i + 1) % planet.gallery!.length)
-                    }}
-                    className="font-mono text-[10px] text-primary hover:text-foreground transition-colors cursor-pointer px-2 py-1 glass-panel rounded"
-                    aria-label="Next photo"
-                  >
-                    {"NEXT >>"}
-                  </button>
+                  <div className="font-mono text-[9px] md:text-[10px] text-muted-foreground/70 mt-1">
+                    {planet.gallery[galleryIndex].desc}
+                  </div>
                 </div>
+                {/* Film grain overlay */}
+                <div className="absolute inset-0 opacity-10" style={{
+                  backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJmIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjgiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjZikiIG9wYWNpdHk9Ii40Ii8+PC9zdmc+')",
+                }} />
+              </div>
+              {/* Gallery controls */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    sounds.play("click")
+                    setGalleryIndex((i) => (i - 1 + planet.gallery!.length) % planet.gallery!.length)
+                  }}
+                  className="font-mono text-[10px] text-primary hover:text-foreground transition-colors cursor-pointer px-2 py-1 glass-panel rounded"
+                  aria-label="Previous photo"
+                >
+                  {"<< PREV"}
+                </button>
+                <span className="font-mono text-[9px] text-muted-foreground/50">
+                  {galleryIndex + 1} / {planet.gallery.length}
+                </span>
+                <button
+                  onClick={() => {
+                    sounds.play("click")
+                    setGalleryIndex((i) => (i + 1) % planet.gallery!.length)
+                  }}
+                  className="font-mono text-[10px] text-primary hover:text-foreground transition-colors cursor-pointer px-2 py-1 glass-panel rounded"
+                  aria-label="Next photo"
+                >
+                  {"NEXT >>"}
+                </button>
               </div>
             </div>
           </div>

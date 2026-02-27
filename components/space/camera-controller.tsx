@@ -39,7 +39,6 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
   // Smooth transition progress (for cinematic planet focus)
   const transitionProgress = useRef(0)
   const wasSelected = useRef<{ x: number; z: number } | null>(null)
-  const launchTimeRef = useRef<number | null>(null)
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
@@ -143,21 +142,13 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
 
   useFrame((state, delta) => {
     if (!launched) {
-      // Pre-launch: far away position
       camera.position.set(0, 100, 150)
       camera.lookAt(0, 0, 0)
-      launchTimeRef.current = null
       return
     }
 
     const t = state.clock.elapsedTime
     driftPhase.current += delta * 0.3
-
-    // Track how long we've been launched for initial zoom-in speed boost
-    if (!launchTimeRef.current) launchTimeRef.current = t
-    const timeSinceLaunch = t - launchTimeRef.current
-    // First 3 seconds: zoom in fast to the solar system center
-    const initialBoost = timeSinceLaunch < 3 ? 3 - timeSinceLaunch : 0
 
     // Keyboard controls
     const keys = keysDown.current
@@ -202,9 +193,8 @@ export function CameraController({ selectedPlanet, launched }: CameraControllerP
       targetLook.current.set(0, 0, 0)
     }
 
-    // Use eased lerp factor - faster when transitioning to planet, with initial zoom boost
-    const baseLerp = selectedPlanet ? 0.02 + ease * 0.03 : 0.03
-    const lerpFactor = baseLerp + initialBoost * 0.04
+    // Use eased lerp factor - faster when transitioning to planet, slower on idle
+    const lerpFactor = selectedPlanet ? 0.02 + ease * 0.03 : 0.03
     camera.position.lerp(targetPos.current, lerpFactor)
 
     const currentLook = new THREE.Vector3()

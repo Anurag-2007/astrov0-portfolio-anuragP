@@ -4,73 +4,62 @@ import { useRef, useMemo } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 
-export function SpaceDust({ count = 800 }) {
+export function SpaceDust({ count = 600 }) {
   const pointsRef = useRef<THREE.Points>(null)
 
-  const [positions, colors, baseSizes] = useMemo(() => {
+  const [positions, colors, sizes] = useMemo(() => {
     const pos = new Float32Array(count * 3)
     const col = new Float32Array(count * 3)
     const s = new Float32Array(count)
 
     for (let i = 0; i < count; i++) {
-      const r = 20 + Math.random() * 140
+      const r = 20 + Math.random() * 120
       const theta = Math.random() * Math.PI * 2
       const phi = (Math.random() - 0.5) * Math.PI * 0.4
       pos[i * 3] = r * Math.cos(phi) * Math.cos(theta)
       pos[i * 3 + 1] = r * Math.sin(phi)
       pos[i * 3 + 2] = r * Math.cos(phi) * Math.sin(theta)
 
-      // Subtle color variety - mostly dim white with slight tints
+      // Color variety
       const colorChoice = Math.random()
       if (colorChoice < 0.3) {
-        col[i * 3] = 0.4 + Math.random() * 0.2
-        col[i * 3 + 1] = 0.7 + Math.random() * 0.2
+        // Cyan
+        col[i * 3] = 0
+        col[i * 3 + 1] = 0.7 + Math.random() * 0.3
         col[i * 3 + 2] = 0.8 + Math.random() * 0.2
-      } else if (colorChoice < 0.5) {
-        col[i * 3] = 0.7 + Math.random() * 0.2
-        col[i * 3 + 1] = 0.4 + Math.random() * 0.2
-        col[i * 3 + 2] = 0.1
+      } else if (colorChoice < 0.6) {
+        // Orange
+        col[i * 3] = 0.8 + Math.random() * 0.2
+        col[i * 3 + 1] = 0.3 + Math.random() * 0.3
+        col[i * 3 + 2] = 0
       } else {
-        col[i * 3] = 0.6 + Math.random() * 0.2
-        col[i * 3 + 1] = 0.6 + Math.random() * 0.2
-        col[i * 3 + 2] = 0.7 + Math.random() * 0.2
+        // White
+        col[i * 3] = 0.7 + Math.random() * 0.3
+        col[i * 3 + 1] = 0.7 + Math.random() * 0.3
+        col[i * 3 + 2] = 0.8 + Math.random() * 0.2
       }
 
-      // Much smaller sizes to avoid "square" appearance
-      s[i] = 0.1 + Math.random() * 0.25
+      s[i] = 0.3 + Math.random() * 0.5
     }
 
     return [pos, col, s]
   }, [count])
 
-  // Create a soft circle texture for round particles
-  const circleTexture = useMemo(() => {
-    const size = 32
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
-    const ctx = canvas.getContext("2d")
-    if (ctx) {
-      const gradient = ctx.createRadialGradient(
-        size / 2, size / 2, 0,
-        size / 2, size / 2, size / 2
-      )
-      gradient.addColorStop(0, "rgba(255, 255, 255, 1)")
-      gradient.addColorStop(0.3, "rgba(255, 255, 255, 0.8)")
-      gradient.addColorStop(0.7, "rgba(255, 255, 255, 0.2)")
-      gradient.addColorStop(1, "rgba(255, 255, 255, 0)")
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, size, size)
-    }
-    const texture = new THREE.CanvasTexture(canvas)
-    return texture
-  }, [])
-
   useFrame((state) => {
     if (!pointsRef.current) return
     const t = state.clock.elapsedTime
-    pointsRef.current.rotation.y = t * 0.002
-    pointsRef.current.rotation.x = Math.sin(t * 0.001) * 0.08
+    pointsRef.current.rotation.y = t * 0.003
+    pointsRef.current.rotation.x = Math.sin(t * 0.001) * 0.1
+
+    // Twinkle effect
+    const sizeAttr = pointsRef.current.geometry.attributes.size
+    if (sizeAttr) {
+      const arr = sizeAttr.array as Float32Array
+      for (let i = 0; i < count; i++) {
+        arr[i] = sizes[i] * (0.7 + Math.sin(t * 2 + i * 0.1) * 0.3)
+      }
+      sizeAttr.needsUpdate = true
+    }
   })
 
   return (
@@ -78,16 +67,15 @@ export function SpaceDust({ count = 800 }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
         <bufferAttribute attach="attributes-color" count={count} array={colors} itemSize={3} />
+        <bufferAttribute attach="attributes-size" count={count} array={new Float32Array(sizes)} itemSize={1} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.2}
-        map={circleTexture}
+        size={0.4}
         vertexColors
         transparent
-        opacity={0.35}
+        opacity={0.4}
         depthWrite={false}
         sizeAttenuation
-        alphaTest={0.01}
       />
     </points>
   )

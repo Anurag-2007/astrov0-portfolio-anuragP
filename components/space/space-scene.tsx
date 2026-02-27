@@ -300,11 +300,8 @@ export function SpaceScene({ launched, selectedPlanet, onSelectPlanet, idleMeteo
         gl={{
           antialias: true,
           toneMapping: 3,
-          toneMappingExposure: 1.5,
-          alpha: false,
-          powerPreference: "high-performance",
+          toneMappingExposure: 1.4,
         }}
-        dpr={[1, 2]}
         onPointerMissed={() => onSelectPlanet(null)}
       >
         <color attach="background" args={["#020610"]} />
