@@ -30,7 +30,7 @@ export interface PlanetData {
   isGallery?: boolean
   isSkillsPlanet?: boolean
   skills?: SkillInfo[]
-  gallery?: Array<{ title: string; desc: string }>
+  gallery?: Array<{ title: string; desc: string; image: string }>
   content: {
     title: string
     items: string[]

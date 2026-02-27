@@ -98,7 +98,10 @@ export function InfoPanel({ planetId, onClose }: InfoPanelProps) {
               <div
                 className="w-full h-28 md:h-36 rounded-md mb-2 md:mb-3 flex items-center justify-center relative overflow-hidden"
                 style={{
-                  background: `linear-gradient(135deg, ${planet.color}33, ${planet.emissive}88, ${planet.color}22)`,
+                   backgroundImage: `url(${planet.gallery[galleryIndex].image})`,
+                   backgroundSize: "cover",
+                   backgroundPosition: "center",
+                   backgroundRepeat: "no-repeat",
                 }}
               >
                 <div className="absolute inset-0 holo-shimmer" />
