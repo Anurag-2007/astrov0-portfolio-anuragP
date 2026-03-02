@@ -83,9 +83,9 @@ export function Sun() {
       <mesh ref={meshRef}>
         <sphereGeometry args={[2, 64, 64]} />
         <meshStandardMaterial
-          color="#00c8dc"
-          emissive="#00a8bc"
-          emissiveIntensity={2.5}
+          color="#FFDF22"
+          emissive="#FFDF22"
+          emissiveIntensity={4}
           roughness={0}
           metalness={0.1}
         />
@@ -95,7 +95,7 @@ export function Sun() {
       <mesh ref={glowRef}>
         <sphereGeometry args={[1, 32, 32]} />
         <meshBasicMaterial
-          color="#00c8dc"
+          color="#acc240"
           transparent
           opacity={0.15}
           side={THREE.BackSide}
@@ -106,7 +106,7 @@ export function Sun() {
       <mesh ref={coronaRef}>
         <sphereGeometry args={[1, 32, 32]} />
         <meshBasicMaterial
-          color="#006878"
+          color="#c6821c"
           transparent
           opacity={0.06}
           side={THREE.BackSide}
@@ -117,7 +117,7 @@ export function Sun() {
       <mesh ref={corona2Ref}>
         <sphereGeometry args={[1, 32, 32]} />
         <meshBasicMaterial
-          color="#004858"
+          color="#c69325"
           transparent
           opacity={0.03}
           side={THREE.BackSide}
@@ -136,7 +136,7 @@ export function Sun() {
         </bufferGeometry>
         <pointsMaterial
           size={0.3}
-          color="#00e8fc"
+          color="#cbd11c"
           transparent
           opacity={0.5}
           depthWrite={false}
@@ -148,7 +148,7 @@ export function Sun() {
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[3, 3.1, 128]} />
         <meshBasicMaterial
-          color="#00c8dc"
+          color="#c4d71e"
           transparent
           opacity={0.1}
           side={THREE.DoubleSide}
@@ -156,9 +156,9 @@ export function Sun() {
       </mesh>
 
       {/* Point lights from sun */}
-      <pointLight color="#00c8dc" intensity={100} distance={200} decay={2} />
-      <pointLight color="#ffffff" intensity={50} distance={100} decay={2} />
-      <pointLight color="#00a8bc" intensity={30} distance={300} decay={2} />
+      <pointLight color="#a6be2a" intensity={100} distance={200} decay={2} />
+      <pointLight color="#d7b50e" intensity={50} distance={100} decay={2} />
+      <pointLight color="#c3ce46" intensity={30} distance={300} decay={2} />
     </group>
   )
 }
