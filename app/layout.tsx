@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'MISSION CONTROL | Cinematic Space Portfolio',
+  title: ' Anurag\'s Spaceport | Cinematic Space Portfolio',
   description: 'An interactive 3D space-themed portfolio. Navigate the cosmos to explore skills, projects, achievements, and hidden easter eggs. Built with Three.js and Next.js.',
   generator: 'v0.app',
   icons: {
